@@ -1689,6 +1689,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meal-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List meal logs
+         * @description Meals logged by the household, newest first. With an API key, it needs the `recipes: read` permission.
+         */
+        get: operations["listMealLogs"];
+        put?: never;
+        /**
+         * Add a meal log
+         * @description Logs a meal with optional nutrition, from a photo analysis, a recipe, or manual entry. With an API key, it needs the `recipes: write` permission.
+         */
+        post: operations["createMealLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meal-logs/{logId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a meal log
+         * @description With an API key, it needs the `recipes: write` permission.
+         */
+        delete: operations["deleteMealLog"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/nutrition/photo": {
         parameters: {
             query?: never;
@@ -8240,6 +8284,77 @@ export interface components {
          */
         UsualSkip: {
             food: string;
+        };
+        MealLogList: {
+            logs: components["schemas"]["MealLog"][];
+        };
+        /**
+         * @example {
+         *       "id": "meal-log-1",
+         *       "name": "Chicken salad",
+         *       "serving": "1 plate",
+         *       "servings": 1,
+         *       "loggedAt": "2026-11-09T12:30:00.000Z",
+         *       "source": "photo",
+         *       "confidence": "medium",
+         *       "notes": "Dressing amount uncertain.",
+         *       "calories": 420,
+         *       "protein": 34,
+         *       "carbs": 18,
+         *       "fat": 24,
+         *       "fiber": 4,
+         *       "sugar": 6,
+         *       "sodium": 680,
+         *       "recipe": null,
+         *       "createdAt": "2026-11-09T12:30:00.000Z"
+         *     }
+         */
+        MealLog: {
+            id: string;
+            name: string;
+            serving: string | null;
+            servings: number | null;
+            /** Format: date-time */
+            loggedAt: string;
+            source: components["schemas"]["MealLogSource"];
+            confidence: components["schemas"]["MealLogConfidence"];
+            notes: string | null;
+            calories: number | null;
+            protein: number | null;
+            carbs: number | null;
+            fat: number | null;
+            fiber: number | null;
+            sugar: number | null;
+            sodium: number | null;
+            recipe: {
+                id: string;
+                slug: string;
+                name: string;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        MealLogSource: "photo" | "recipe" | "manual";
+        /** @enum {string|null} */
+        MealLogConfidence: "low" | "medium" | "high" | null;
+        MealLogInput: {
+            name: string;
+            serving?: string | null;
+            servings?: number | null;
+            /** Format: date-time */
+            loggedAt?: string;
+            source?: components["schemas"]["MealLogSource"];
+            confidence?: components["schemas"]["MealLogConfidence"];
+            notes?: string | null;
+            calories?: number | null;
+            protein?: number | null;
+            carbs?: number | null;
+            fat?: number | null;
+            fiber?: number | null;
+            sugar?: number | null;
+            sodium?: number | null;
+            recipeId?: string | null;
         };
         /**
          * @description Estimated nutrition for the meal shown in the photo. Values are per serving as shown; unknown values are left out.
@@ -18078,6 +18193,145 @@ export interface operations {
             };
             /** @description Someone changed it since. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listMealLogs: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The meal logs. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MealLogList"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createMealLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MealLogInput"];
+            };
+        };
+        responses: {
+            /** @description The meal log. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MealLog"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such recipe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteMealLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                logId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such meal log. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

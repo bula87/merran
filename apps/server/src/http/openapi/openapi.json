@@ -7017,6 +7017,293 @@
           "food": "milk"
         }
       },
+      "MealLogList": {
+        "type": "object",
+        "properties": {
+          "logs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MealLog"
+            }
+          }
+        },
+        "required": [
+          "logs"
+        ]
+      },
+      "MealLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serving": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "servings": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "$ref": "#/components/schemas/MealLogSource"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/MealLogConfidence"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "calories": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "protein": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "carbs": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "fat": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "fiber": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sugar": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sodium": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "recipe": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "slug",
+              "name"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "serving",
+          "servings",
+          "loggedAt",
+          "source",
+          "confidence",
+          "notes",
+          "calories",
+          "protein",
+          "carbs",
+          "fat",
+          "fiber",
+          "sugar",
+          "sodium",
+          "recipe",
+          "createdAt"
+        ],
+        "example": {
+          "id": "meal-log-1",
+          "name": "Chicken salad",
+          "serving": "1 plate",
+          "servings": 1,
+          "loggedAt": "2026-11-09T12:30:00.000Z",
+          "source": "photo",
+          "confidence": "medium",
+          "notes": "Dressing amount uncertain.",
+          "calories": 420,
+          "protein": 34,
+          "carbs": 18,
+          "fat": 24,
+          "fiber": 4,
+          "sugar": 6,
+          "sodium": 680,
+          "recipe": null,
+          "createdAt": "2026-11-09T12:30:00.000Z"
+        }
+      },
+      "MealLogSource": {
+        "type": "string",
+        "enum": [
+          "photo",
+          "recipe",
+          "manual"
+        ]
+      },
+      "MealLogConfidence": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          null
+        ]
+      },
+      "MealLogInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "serving": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "servings": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "maximum": 1000
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "$ref": "#/components/schemas/MealLogSource"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/MealLogConfidence"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "calories": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "protein": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "carbs": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "fat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "fiber": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "sugar": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "sodium": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "recipeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "MealPhotoAnalysis": {
         "type": "object",
         "properties": {
@@ -23607,6 +23894,224 @@
             }
           }
         }
+      }
+    },
+    "/api/meal-logs": {
+      "get": {
+        "operationId": "listMealLogs",
+        "tags": [
+          "Meal logs"
+        ],
+        "summary": "List meal logs",
+        "description": "Meals logged by the household, newest first. With an API key, it needs the `recipes: read` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:read",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The meal logs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealLogList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createMealLog",
+        "tags": [
+          "Meal logs"
+        ],
+        "summary": "Add a meal log",
+        "description": "Logs a meal with optional nutrition, from a photo analysis, a recipe, or manual entry. With an API key, it needs the `recipes: write` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:write",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealLogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The meal log.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such recipe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meal-logs/{logId}": {
+      "delete": {
+        "operationId": "deleteMealLog",
+        "tags": [
+          "Meal logs"
+        ],
+        "summary": "Delete a meal log",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "logId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such meal log.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "With an API key, it needs the `recipes: write` permission."
       }
     },
     "/api/nutrition/photo": {

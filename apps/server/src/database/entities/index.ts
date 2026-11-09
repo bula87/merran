@@ -40,6 +40,7 @@ import { Household } from "./households.ts"
 import { InviteLink } from "./invite_links.ts"
 import { PasswordReset } from "./password_resets.ts"
 import { Job } from "./jobs.ts"
+import { MealLog } from "./meal_logs.ts"
 import { PantryItem } from "./pantry_items.ts"
 import { PlanEntry } from "./plan_entries.ts"
 import { PlanSlotTime } from "./plan_slot_times.ts"
@@ -91,6 +92,7 @@ export * from "./households.ts"
 export * from "./invite_links.ts"
 export * from "./password_resets.ts"
 export * from "./jobs.ts"
+export * from "./meal_logs.ts"
 export * from "./pantry_items.ts"
 export * from "./plan_entries.ts"
 export * from "./plan_slot_times.ts"
@@ -153,6 +155,7 @@ export const entities = [
   InviteLink,
   PasswordReset,
   Job,
+  MealLog,
   PantryItem,
   PlanEntry,
   PlanSlotTime,
