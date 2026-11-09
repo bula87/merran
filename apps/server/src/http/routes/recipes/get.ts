@@ -29,10 +29,11 @@ const route = createRoute({
 export default (router: Router, _deps: AppDeps) => {
   router.openapi(route, async (c) => {
     const { em, householdId } = inHousehold(c)
-    const { onSale, ...query } = c.req.valid("query")
+    const { onSale, locale, ...query } = c.req.valid("query")
     return c.json(
       await listRecipes(em, {
         ...query,
+        locale,
         only: onSale ? await recipesOnSale(em, householdId) : undefined,
       }),
       200

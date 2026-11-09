@@ -661,6 +661,12 @@
               "string",
               "null"
             ]
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -672,7 +678,8 @@
           "twoFactorEnabled",
           "requiresTwoFactor",
           "households",
-          "activeHouseholdId"
+          "activeHouseholdId",
+          "language"
         ],
         "example": {
           "twoFactorEnabled": false,
@@ -2568,6 +2575,60 @@
                         ]
                       }
                     ]
+                  },
+                  "translate": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ok": {
+                            "type": "boolean",
+                            "enum": [
+                              true
+                            ]
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "server",
+                              "household"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ok",
+                          "ref",
+                          "source"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ok": {
+                            "type": "boolean",
+                            "enum": [
+                              false
+                            ]
+                          },
+                          "why": {
+                            "type": "string",
+                            "enum": [
+                              "noKey",
+                              "notCovered",
+                              "overLimit",
+                              "ownLimit"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ok",
+                          "why"
+                        ]
+                      }
+                    ]
                   }
                 },
                 "description": "For each task, the model and whose key, or why none."
@@ -2871,6 +2932,11 @@
                 "ok": true,
                 "ref": "anthropic:claude-opus-5-5",
                 "source": "server"
+              },
+              "translate": {
+                "ok": true,
+                "ref": "anthropic:claude-opus-5-5",
+                "source": "server"
               }
             },
             "month": "2026-10",
@@ -2894,6 +2960,8 @@
           "settings": {
             "large": null,
             "small": null,
+            "image": null,
+            "translation": null,
             "tasks": {},
             "monthlyLimit": null
           },
@@ -3117,6 +3185,24 @@
             "description": "A model: \"anthropic:claude-opus-5-5\", or on an address, \"endpoint:<its id>:llama3.1\".",
             "example": "anthropic:claude-opus-5-5"
           },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300,
+            "description": "Model for image processing; null to go by its keys, or the server's.",
+            "example": "anthropic:claude-opus-5-5"
+          },
+          "translation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300,
+            "description": "Model for translations; null to go by its keys, or the server's.",
+            "example": "anthropic:claude-opus-5-5"
+          },
           "tasks": {
             "type": "object",
             "properties": {
@@ -3179,6 +3265,12 @@
                 "maxLength": 300,
                 "description": "A model: \"anthropic:claude-opus-5-5\", or on an address, \"endpoint:<its id>:llama3.1\".",
                 "example": "anthropic:claude-opus-5-5"
+              },
+              "translate": {
+                "type": "string",
+                "maxLength": 300,
+                "description": "A model: \"anthropic:claude-opus-5-5\", or on an address, \"endpoint:<its id>:llama3.1\".",
+                "example": "anthropic:claude-opus-5-5"
               }
             },
             "description": "A model for a task of its own."
@@ -3201,12 +3293,16 @@
         "required": [
           "large",
           "small",
+          "image",
+          "translation",
           "tasks",
           "monthlyLimit"
         ],
         "example": {
           "large": null,
           "small": null,
+          "image": null,
+          "translation": null,
           "tasks": {},
           "monthlyLimit": 10,
           "autoTidy": false
@@ -12554,6 +12650,189 @@
         ],
         "description": "A part of a recipe tidy up can change: its ingredients, steps, tags, a missing description, missing servings and times, and the marks on its ingredients."
       },
+      "RecipeTranslationsStatus": {
+        "type": "object",
+        "properties": {
+          "supportedLocales": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "en",
+              "pl"
+            ]
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Locales this recipe has translations for."
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "translations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeTranslation"
+            }
+          }
+        },
+        "required": [
+          "supportedLocales",
+          "locales",
+          "complete",
+          "translations"
+        ]
+      },
+      "RecipeTranslation": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "yieldText": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranslatedRecipeIngredient"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranslatedRecipeStep"
+            }
+          },
+          "translatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "locale",
+          "name",
+          "description",
+          "yieldText",
+          "notes",
+          "ingredients",
+          "steps",
+          "translatedAt",
+          "updatedAt"
+        ],
+        "example": {
+          "locale": "pl",
+          "name": "Zupa z dyni",
+          "description": null,
+          "yieldText": null,
+          "notes": null,
+          "ingredients": [
+            {
+              "section": null,
+              "text": "1 dynia",
+              "note": null
+            }
+          ],
+          "steps": [
+            {
+              "section": null,
+              "text": "Upiecz dynię."
+            }
+          ],
+          "translatedAt": "2026-11-09T00:00:00.000Z",
+          "updatedAt": "2026-11-09T00:00:00.000Z"
+        }
+      },
+      "TranslatedRecipeIngredient": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "section",
+          "text",
+          "note"
+        ]
+      },
+      "TranslatedRecipeStep": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "section",
+          "text"
+        ]
+      },
+      "RecipeTranslationStarted": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RecipeTranslationsStatus"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "jobId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "jobId"
+            ]
+          }
+        ]
+      },
       "RecipeVersion": {
         "type": "object",
         "properties": {
@@ -13083,13 +13362,16 @@
               "shopping",
               "receipts",
               "discover",
-              "reminders"
+              "reminders",
+              "translate"
             ],
             "models": [],
             "householdKeys": true,
             "householdAddresses": false,
             "large": null,
-            "small": null
+            "small": null,
+            "image": null,
+            "translation": null
           },
           "models": [
             {
@@ -13188,10 +13470,11 @@
                 "shopping",
                 "receipts",
                 "discover",
-                "reminders"
+                "reminders",
+                "translate"
               ]
             },
-            "maxItems": 10
+            "maxItems": 11
           },
           "models": {
             "type": "array",
@@ -13220,6 +13503,20 @@
               "null"
             ],
             "maxLength": 300
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          },
+          "translation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
           }
         },
         "required": [
@@ -13232,9 +13529,11 @@
           "householdKeys",
           "householdAddresses",
           "large",
-          "small"
+          "small",
+          "image",
+          "translation"
         ],
-        "description": "Who may use the server's keys: `serverKeysFor` is admins, chosen, all, none (the server admins' households, the chosen `households`, every household, or none). `monthlyLimit` is each household's in US dollars on the server's keys (null for none), and `limits` a household's own instead. `tasks` and `models` are what the server's keys cover (no models means any). `householdKeys` and `householdAddresses` say whether households may add their own keys and addresses. `large` and `small` are the models households use when they haven't picked.",
+        "description": "Who may use the server's keys: `serverKeysFor` is admins, chosen, all, none (the server admins' households, the chosen `households`, every household, or none). `monthlyLimit` is each household's in US dollars on the server's keys (null for none), and `limits` a household's own instead. `tasks` and `models` are what the server's keys cover (no models means any). `householdKeys` and `householdAddresses` say whether households may add their own keys and addresses. `large`, `small`, `image`, and `translation` are the models households use when they haven't picked.",
         "example": {
           "serverKeysFor": "admins",
           "households": [],
@@ -13250,13 +13549,16 @@
             "shopping",
             "receipts",
             "discover",
-            "reminders"
+            "reminders",
+            "translate"
           ],
           "models": [],
           "householdKeys": true,
           "householdAddresses": false,
           "large": null,
-          "small": null
+          "small": null,
+          "image": null,
+          "translation": null
         }
       },
       "JobList": {
@@ -17415,6 +17717,75 @@
           },
           "401": {
             "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me/language": {
+      "patch": {
+        "operationId": "updateLanguage",
+        "tags": [
+          "Sign-in"
+        ],
+        "summary": "Set the UI language",
+        "description": "The chosen language belongs to the signed-in person.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "language"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Language saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26446,6 +26817,17 @@
           },
           {
             "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "description": "When a recipe has a translation for this locale, its name is returned in that language."
+            },
+            "required": false,
+            "description": "When a recipe has a translation for this locale, its name is returned in that language.",
+            "name": "locale",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
@@ -30620,6 +31002,168 @@
           },
           "502": {
             "description": "The AI provider failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recipes/{recipe}/translate": {
+      "get": {
+        "operationId": "getRecipeTranslations",
+        "tags": [
+          "Recipes"
+        ],
+        "summary": "A recipe's translations",
+        "description": "The translations this recipe has for the languages Merran supports, and which languages are still missing. With an API key, it needs the `recipes: read` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:read",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "The recipe's id, or its slug.",
+              "example": "lemon-chicken"
+            },
+            "required": true,
+            "description": "The recipe's id, or its slug.",
+            "name": "recipe",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Its translation status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeTranslationsStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such recipe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "translateRecipe",
+        "tags": [
+          "Recipes"
+        ],
+        "summary": "Translate a recipe",
+        "description": "Translates the recipe into every language Merran supports, in the background. Any member of the household can start it. Uses the household's translation model and counts towards its AI spend. With an API key, it needs the `recipes: write` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "The recipe's id, or its slug.",
+              "example": "lemon-chicken"
+            },
+            "required": true,
+            "description": "The recipe's id, or its slug.",
+            "name": "recipe",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translation started, or already up to date.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeTranslationStarted"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such recipe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "This month's AI limit is reached.",
             "content": {
               "application/json": {
                 "schema": {

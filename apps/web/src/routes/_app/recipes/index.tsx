@@ -102,11 +102,13 @@ function asText(value: unknown) {
 }
 
 function RecipesPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const [managingTags, setManagingTags] = React.useState(false)
-  const recipes = useInfiniteQuery(recipesQuery(search))
+  const recipes = useInfiniteQuery(
+    recipesQuery(search, i18n.resolvedLanguage ?? i18n.language)
+  )
   const deals = useDeals()
   const planned = usePlannedRecipes()
 

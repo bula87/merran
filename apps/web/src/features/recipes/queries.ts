@@ -15,6 +15,7 @@ export type DeletedRecipe = Schemas["DeletedRecipe"]
 export type Tag = Schemas["Tag"]
 export type CookNote = Schemas["CookNote"]
 export type RecipePairings = Schemas["RecipePairings"]
+export type RecipeTranslationsStatus = Schemas["RecipeTranslationsStatus"]
 
 export const RECIPE_SORTS = [
   "newest",
@@ -63,9 +64,10 @@ export function searchDiets(search: RecipeSearch): Diet[] {
 
 const PAGE = 48
 
-export const recipesQuery = (search: RecipeSearch) =>
-  infiniteQueryOptions({
-    queryKey: ["recipes", "list", search],
+export const recipesQuery = (search: RecipeSearch, locale?: string) => {
+  const language = locale?.toLowerCase().split("-")[0]
+  return infiniteQueryOptions({
+    queryKey: ["recipes", "list", search, language ?? null],
     queryFn: ({ pageParam }) =>
       unwrap(
         api.GET("/api/recipes", {
@@ -81,6 +83,7 @@ export const recipesQuery = (search: RecipeSearch) =>
               ...(search.time ? { maxMinutes: search.time } : {}),
               ...(search.new ? { new: "true" } : {}),
               ...(search.onSale ? { onSale: "true" } : {}),
+              ...(language ? { locale: language } : {}),
               sort: search.sort ?? "newest",
               limit: PAGE,
               offset: pageParam,
@@ -94,6 +97,7 @@ export const recipesQuery = (search: RecipeSearch) =>
       return loaded < last.total ? loaded : undefined
     },
   })
+}
 
 export const recipeQuery = (slug: string) =>
   queryOptions({
@@ -157,6 +161,17 @@ export const pairingsQuery = (recipeId: string) =>
       unwrap(
         api.GET("/api/recipes/{recipe}/pairings", {
           params: { path: { recipe: recipeId } },
+        })
+      ),
+  })
+
+export const recipeTranslationsQuery = (recipe: string) =>
+  queryOptions({
+    queryKey: ["recipes", "translations", recipe],
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/recipes/{recipe}/translate", {
+          params: { path: { recipe } },
         })
       ),
   })

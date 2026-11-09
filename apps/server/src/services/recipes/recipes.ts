@@ -4,6 +4,7 @@ import {
   applyDietOverrides,
   dietsFor,
   foodKey,
+  isSupportedLocale,
   joinSections,
   keptOverrides,
   namesFood,
@@ -15,6 +16,7 @@ import {
   type FoodLine,
   type FoodSource,
   type MarkedLine,
+  type SupportedLocale,
 } from "@merran/shared"
 import { raw, type FilterQuery } from "@mikro-orm/core"
 import type { EntityManager } from "@mikro-orm/sql"
@@ -27,6 +29,7 @@ import {
   RecipeIngredient,
   RecipeStep,
   RecipeTag,
+  RecipeTranslation,
   RecipeVersion,
   Tag,
   type Nutrition,
@@ -77,11 +80,15 @@ export function totalMinutes(recipe: Recipe) {
   return (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0)
 }
 
-export function summarize(recipe: Recipe, tags: string[]) {
+export function summarize(
+  recipe: Recipe,
+  tags: string[],
+  options?: { name?: string }
+) {
   return {
     id: recipe.id,
     slug: recipe.slug,
-    name: recipe.name,
+    name: options?.name ?? recipe.name,
     description: recipe.description ?? null,
     servings: toNumber(recipe.servings),
     totalMinutes: totalMinutes(recipe),
@@ -532,6 +539,8 @@ export type RecipeListOptions = {
   maxMinutes?: number | undefined
   /** Only these recipes, as for those with something on sale. */
   only?: readonly string[] | undefined
+  /** Show translated recipe names for this locale when available. */
+  locale?: string | undefined
   sort: keyof typeof ORDER
   limit: number
   offset: number
@@ -556,6 +565,7 @@ export async function listRecipes(
     diet,
     maxMinutes,
     only,
+    locale,
     sort,
     limit,
     offset,
@@ -625,13 +635,24 @@ export async function listRecipes(
     limit,
     offset,
   })
-  const tags = await tagsOf(
-    em,
-    recipes.map((recipe) => recipe.id)
-  )
+  const ids = recipes.map((recipe) => recipe.id)
+  const tags = await tagsOf(em, ids)
+  const localeCode = locale?.toLowerCase().split("-")[0]
+  const names = new Map<string, string>()
+  if (localeCode && isSupportedLocale(localeCode) && ids.length > 0) {
+    const translations = await em.find(RecipeTranslation, {
+      recipe: { $in: ids },
+      locale: localeCode as SupportedLocale,
+    })
+    for (const translation of translations) {
+      names.set(translation.recipe.id, translation.name)
+    }
+  }
   return {
     recipes: recipes.map((recipe) =>
-      summarize(recipe, tags.get(recipe.id) ?? [])
+      summarize(recipe, tags.get(recipe.id) ?? [], {
+        name: names.get(recipe.id),
+      })
     ),
     total,
   }

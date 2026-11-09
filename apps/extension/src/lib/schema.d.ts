@@ -224,6 +224,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/me/language": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set the UI language
+         * @description The chosen language belongs to the signed-in person.
+         */
+        patch: operations["updateLanguage"];
+        trace?: never;
+    };
     "/api/auth/me/onboarding": {
         parameters: {
             query?: never;
@@ -3192,6 +3212,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recipes/{recipe}/translate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A recipe's translations
+         * @description The translations this recipe has for the languages Merran supports, and which languages are still missing. With an API key, it needs the `recipes: read` permission.
+         */
+        get: operations["getRecipeTranslations"];
+        put?: never;
+        /**
+         * Translate a recipe
+         * @description Translates the recipe into every language Merran supports, in the background. Any member of the household can start it. Uses the household's translation model and counts towards its AI spend. With an API key, it needs the `recipes: write` permission.
+         */
+        post: operations["translateRecipe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/recipes/{recipe}/versions": {
         parameters: {
             query?: never;
@@ -5337,6 +5381,7 @@ export interface components {
                 role: "owner" | "admin" | "member";
             }[];
             activeHouseholdId: string | null;
+            language: string | null;
         };
         /**
          * @example {
@@ -5999,6 +6044,11 @@ export interface components {
          *             "ok": true,
          *             "ref": "anthropic:claude-opus-5-5",
          *             "source": "server"
+         *           },
+         *           "translate": {
+         *             "ok": true,
+         *             "ref": "anthropic:claude-opus-5-5",
+         *             "source": "server"
          *           }
          *         },
          *         "month": "2026-10",
@@ -6022,6 +6072,8 @@ export interface components {
          *       "settings": {
          *         "large": null,
          *         "small": null,
+         *         "image": null,
+         *         "translation": null,
          *         "tasks": {},
          *         "monthlyLimit": null
          *       },
@@ -6178,6 +6230,18 @@ export interface components {
                         /** @enum {string} */
                         why: "noKey" | "notCovered" | "overLimit" | "ownLimit";
                     };
+                    translate?: {
+                        /** @enum {boolean} */
+                        ok: true;
+                        ref: string;
+                        /** @enum {string} */
+                        source: "server" | "household";
+                    } | {
+                        /** @enum {boolean} */
+                        ok: false;
+                        /** @enum {string} */
+                        why: "noKey" | "notCovered" | "overLimit" | "ownLimit";
+                    };
                 };
                 month: string;
                 server: {
@@ -6313,6 +6377,8 @@ export interface components {
          * @example {
          *       "large": null,
          *       "small": null,
+         *       "image": null,
+         *       "translation": null,
          *       "tasks": {},
          *       "monthlyLimit": 10,
          *       "autoTidy": false
@@ -6329,6 +6395,16 @@ export interface components {
              * @example anthropic:claude-opus-5-5
              */
             small: string | null;
+            /**
+             * @description Model for image processing; null to go by its keys, or the server's.
+             * @example anthropic:claude-opus-5-5
+             */
+            image: string | null;
+            /**
+             * @description Model for translations; null to go by its keys, or the server's.
+             * @example anthropic:claude-opus-5-5
+             */
+            translation: string | null;
             /** @description A model for a task of its own. */
             tasks: {
                 /**
@@ -6381,6 +6457,11 @@ export interface components {
                  * @example anthropic:claude-opus-5-5
                  */
                 reminders?: string;
+                /**
+                 * @description A model: "anthropic:claude-opus-5-5", or on an address, "endpoint:<its id>:llama3.1".
+                 * @example anthropic:claude-opus-5-5
+                 */
+                translate?: string;
             };
             /** @description A monthly limit on its own keys, in US dollars; null for none. */
             monthlyLimit: number | null;
@@ -11206,6 +11287,68 @@ export interface components {
          * @enum {string}
          */
         TidySection: "ingredients" | "steps" | "tags" | "description" | "details" | "marks" | "foods";
+        RecipeTranslationsStatus: {
+            /**
+             * @example [
+             *       "en",
+             *       "pl"
+             *     ]
+             */
+            supportedLocales: string[];
+            /** @description Locales this recipe has translations for. */
+            locales: string[];
+            complete: boolean;
+            translations: components["schemas"]["RecipeTranslation"][];
+        };
+        /**
+         * @example {
+         *       "locale": "pl",
+         *       "name": "Zupa z dyni",
+         *       "description": null,
+         *       "yieldText": null,
+         *       "notes": null,
+         *       "ingredients": [
+         *         {
+         *           "section": null,
+         *           "text": "1 dynia",
+         *           "note": null
+         *         }
+         *       ],
+         *       "steps": [
+         *         {
+         *           "section": null,
+         *           "text": "Upiecz dynię."
+         *         }
+         *       ],
+         *       "translatedAt": "2026-11-09T00:00:00.000Z",
+         *       "updatedAt": "2026-11-09T00:00:00.000Z"
+         *     }
+         */
+        RecipeTranslation: {
+            locale: string;
+            name: string;
+            description: string | null;
+            yieldText: string | null;
+            notes: string | null;
+            ingredients: components["schemas"]["TranslatedRecipeIngredient"][];
+            steps: components["schemas"]["TranslatedRecipeStep"][];
+            /** Format: date-time */
+            translatedAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        TranslatedRecipeIngredient: {
+            section: string | null;
+            text: string;
+            note: string | null;
+        };
+        TranslatedRecipeStep: {
+            section: string | null;
+            text: string;
+        };
+        RecipeTranslationStarted: components["schemas"]["RecipeTranslationsStatus"] & {
+            jobId: string | null;
+        };
         /**
          * @example {
          *       "id": "0199e8b0-5a10-7a01-8b00-00000000000d",
@@ -11401,13 +11544,16 @@ export interface components {
          *           "shopping",
          *           "receipts",
          *           "discover",
-         *           "reminders"
+         *           "reminders",
+         *           "translate"
          *         ],
          *         "models": [],
          *         "householdKeys": true,
          *         "householdAddresses": false,
          *         "large": null,
-         *         "small": null
+         *         "small": null,
+         *         "image": null,
+         *         "translation": null
          *       },
          *       "models": [
          *         {
@@ -11493,7 +11639,7 @@ export interface components {
             };
         };
         /**
-         * @description Who may use the server's keys: `serverKeysFor` is admins, chosen, all, none (the server admins' households, the chosen `households`, every household, or none). `monthlyLimit` is each household's in US dollars on the server's keys (null for none), and `limits` a household's own instead. `tasks` and `models` are what the server's keys cover (no models means any). `householdKeys` and `householdAddresses` say whether households may add their own keys and addresses. `large` and `small` are the models households use when they haven't picked.
+         * @description Who may use the server's keys: `serverKeysFor` is admins, chosen, all, none (the server admins' households, the chosen `households`, every household, or none). `monthlyLimit` is each household's in US dollars on the server's keys (null for none), and `limits` a household's own instead. `tasks` and `models` are what the server's keys cover (no models means any). `householdKeys` and `householdAddresses` say whether households may add their own keys and addresses. `large`, `small`, `image`, and `translation` are the models households use when they haven't picked.
          * @example {
          *       "serverKeysFor": "admins",
          *       "households": [],
@@ -11509,13 +11655,16 @@ export interface components {
          *         "shopping",
          *         "receipts",
          *         "discover",
-         *         "reminders"
+         *         "reminders",
+         *         "translate"
          *       ],
          *       "models": [],
          *       "householdKeys": true,
          *       "householdAddresses": false,
          *       "large": null,
-         *       "small": null
+         *       "small": null,
+         *       "image": null,
+         *       "translation": null
          *     }
          */
         AiPolicy: {
@@ -11526,12 +11675,14 @@ export interface components {
             limits: {
                 [key: string]: number;
             };
-            tasks: ("assistant" | "import" | "tidy" | "notes" | "swaps" | "nutrition" | "shopping" | "receipts" | "discover" | "reminders")[];
+            tasks: ("assistant" | "import" | "tidy" | "notes" | "swaps" | "nutrition" | "shopping" | "receipts" | "discover" | "reminders" | "translate")[];
             models: string[];
             householdKeys: boolean;
             householdAddresses: boolean;
             large: string | null;
             small: string | null;
+            image: string | null;
+            translation: string | null;
         };
         /**
          * @example {
@@ -13789,6 +13940,50 @@ export interface operations {
             };
             /** @description Not signed in. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateLanguage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    language: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Language saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19923,6 +20118,8 @@ export interface operations {
                 onSale?: string;
                 /** @description Newest added, name, recently changed, top rated, or recently made. */
                 sort?: "newest" | "name" | "updated" | "rating" | "made";
+                /** @description When a recipe has a translation for this locale, its name is returned in that language. */
+                locale?: string;
                 limit?: number;
                 offset?: number | null;
             };
@@ -22756,6 +22953,115 @@ export interface operations {
             };
             /** @description The AI provider failed. */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getRecipeTranslations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The recipe's id, or its slug. */
+                recipe: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Its translation status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeTranslationsStatus"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such recipe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    translateRecipe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The recipe's id, or its slug. */
+                recipe: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Translation started, or already up to date. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeTranslationStarted"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such recipe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description This month's AI limit is reached. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

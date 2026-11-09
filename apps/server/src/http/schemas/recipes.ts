@@ -250,6 +250,10 @@ export const RecipeListQuerySchema = z.object({
     description:
       "Newest added, name, recently changed, top rated, or recently made.",
   }),
+  locale: z.string().trim().max(35).optional().openapi({
+    description:
+      "When a recipe has a translation for this locale, its name is returned in that language.",
+  }),
   limit: z.coerce.number().int().min(1).max(100).default(48),
   offset: z.coerce.number().int().min(0).default(0),
 })
