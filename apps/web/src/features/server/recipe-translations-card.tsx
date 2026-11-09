@@ -29,6 +29,7 @@ import { serverSettingsQuery, useSaveServerSettings } from "./queries"
 
 const ENABLED = "recipeTranslations.enabled"
 const HOUR = "recipeTranslations.hour"
+const MAX = "recipeTranslations.maxPerRun"
 
 export function RecipeTranslationsCard() {
   const { t } = useTranslation()
@@ -38,8 +39,10 @@ export function RecipeTranslationsCard() {
   const id = React.useId()
   const enabled = data.settings.find((s) => s.key === ENABLED)
   const hour = data.settings.find((s) => s.key === HOUR)
+  const max = data.settings.find((s) => s.key === MAX)
   const on = enabled?.value === true
   const hourValue = typeof hour?.value === "number" ? hour.value : 3
+  const maxValue = typeof max?.value === "number" ? max.value : 25
 
   async function saveEnabled(next: boolean) {
     setSaving("enabled")
@@ -59,6 +62,20 @@ export function RecipeTranslationsCard() {
     setSaving("hour")
     try {
       await save({ [HOUR]: value })
+      toast.success(t("settings.server.recipeTranslations.saved"))
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error
+      toast.error(error.message)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  async function saveMax(value: number) {
+    if (!Number.isInteger(value) || value < 1 || value > 200) return
+    setSaving("max")
+    try {
+      await save({ [MAX]: value })
       toast.success(t("settings.server.recipeTranslations.saved"))
     } catch (error) {
       if (!(error instanceof ApiError)) throw error
@@ -136,6 +153,40 @@ export function RecipeTranslationsCard() {
                   <LockedNote state={hour} />
                 ) : (
                   t("settings.server.recipeTranslations.hourHint")
+                )}
+              </FieldDescription>
+            </Field>
+          )}
+          {max && (
+            <Field>
+              <FieldLabel htmlFor={`${id}-max`}>
+                {t("settings.server.recipeTranslations.maxPerRun")}
+              </FieldLabel>
+              <div className="flex items-center gap-2">
+                <Input
+                  id={`${id}-max`}
+                  type="number"
+                  min={1}
+                  max={200}
+                  step={1}
+                  className="w-24"
+                  defaultValue={maxValue}
+                  disabled={saving !== null || max.lockedBy !== null}
+                  onBlur={(e) => {
+                    const value = Number(e.currentTarget.value)
+                    if (value !== maxValue) void saveMax(value)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur()
+                  }}
+                />
+                {saving === "max" && <Spinner />}
+              </div>
+              <FieldDescription>
+                {max.lockedBy ? (
+                  <LockedNote state={max} />
+                ) : (
+                  t("settings.server.recipeTranslations.maxPerRunHint")
                 )}
               </FieldDescription>
             </Field>

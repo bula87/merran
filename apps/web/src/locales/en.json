@@ -887,6 +887,8 @@
         "enabledHint": "Each recipe is translated into every language Merran supports.",
         "hour": "Run at",
         "hourHint": "The hour of day, in the server's time (0–23).",
+        "maxPerRun": "Max recipes per run",
+        "maxPerRunHint": "How many recipes to translate each scheduled run. Smaller batches spread AI load; the rest are translated in later runs.",
         "saved": "Saved."
       },
       "voice": {

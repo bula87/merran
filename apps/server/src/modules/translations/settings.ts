@@ -17,4 +17,12 @@ export const RECIPE_TRANSLATIONS = {
     description:
       "Hour of day (0-23, server time) to run automatic recipe translations.",
   }),
+  maxPerRun: numberSetting({
+    key: "recipeTranslations.maxPerRun",
+    env: "MERRAN_RECIPE_TRANSLATIONS_MAX_PER_RUN",
+    schema: z.number().int().min(1).max(200),
+    default: 25,
+    description:
+      "Maximum number of recipes to translate in one scheduled run. Smaller batches spread AI load over time.",
+  }),
 }

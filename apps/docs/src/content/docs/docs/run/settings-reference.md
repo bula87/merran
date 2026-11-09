@@ -498,6 +498,17 @@ Hour of day (0-23, server time) to run automatic recipe translations.
 
 [Source definition](https://github.com/merran-app/merran/blob/main/apps/server/src/modules/translations/settings.ts)
 
+## recipeTranslations.maxPerRun
+
+Maximum number of recipes to translate in one scheduled run. Smaller batches spread AI load over time.
+
+- **Scope:** server
+- **Type:** number
+- **Default:** `25`
+- **Environment:** `MERRAN_RECIPE_TRANSLATIONS_MAX_PER_RUN`
+
+[Source definition](https://github.com/merran-app/merran/blob/main/apps/server/src/modules/translations/settings.ts)
+
 ## voice.provider
 
 Who reads cook steps aloud: the device, Kokoro, or OpenAI. OpenAI requires eligible AI access and incurs provider charges. Unset: Kokoro when its address is configured, otherwise the device.

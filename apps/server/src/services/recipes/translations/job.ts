@@ -91,11 +91,17 @@ export const translateRecipesJob: JobHandler = {
       return { off: true }
     }
 
-    const missing = await recipesMissingTranslations(ctx.em)
+    const maxPerRun = await ctx.deps.settings.server(
+      RECIPE_TRANSLATIONS.maxPerRun
+    )
+    const missing = await recipesMissingTranslations(ctx.em, {
+      limit: Math.max(500, maxPerRun * 10),
+    })
+    const batch = missing.slice(0, maxPerRun)
     let queued = 0
     let done = 0
-    await ctx.progress(0, missing.length)
-    for (const recipe of missing) {
+    await ctx.progress(0, batch.length)
+    for (const recipe of batch) {
       if (ctx.signal.aborted) throw new JobStopped("cancelled")
       const householdId = recipe.household.id
       await enqueue(ctx.em, {
@@ -107,13 +113,13 @@ export const translateRecipesJob: JobHandler = {
       })
       queued++
       done++
-      await ctx.progress(done, missing.length, { queued })
+      await ctx.progress(done, batch.length, { queued })
     }
 
     if (payload.scheduled) {
       await scheduleRecipeTranslations(ctx.deps)
     }
 
-    return { queued, total: missing.length }
+    return { queued, total: missing.length, maxPerRun }
   },
 }
