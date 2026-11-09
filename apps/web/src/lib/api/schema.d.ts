@@ -2455,9 +2455,93 @@ export interface paths {
         put?: never;
         /**
          * Suggest meals with AI
-         * @description Uses AI to suggest recipes for the given slots based on available recipes, household context, and your personal profile (allergies, preferences, goals). Returns the same suggestion shape as Fill the week; nothing is planned until you add it. Max calories per day is guided to 2000 kcal for now. With an API key, it needs the `plan: read` permission.
+         * @description Uses AI to suggest recipes for the given slots based on available recipes, household context, and your personal profile (allergies, preferences, goals). Streams progress/status events and a final result with the same suggestion shape as Fill the week; nothing is planned until you add it. Max calories per day is guided to 2000 kcal for now. With an API key, it needs the `plan: read` permission.
          */
         post: operations["suggestMealsAi"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plan/ai-fill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List active and reviewable AI fill runs
+         * @description With an API key, it needs the `plan: read` permission.
+         */
+        get: operations["listPlanAiFills"];
+        put?: never;
+        /**
+         * Start filling the week with AI in the background
+         * @description Generates AI meal suggestions for the given slots in the background. Poll the run or list active runs to review suggestions, then apply or decline them. With an API key, it needs the `plan: write` permission.
+         */
+        post: operations["startPlanAiFill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plan/ai-fill/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an AI fill run
+         * @description With an API key, it needs the `plan: read` permission.
+         */
+        get: operations["getPlanAiFill"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plan/ai-fill/{runId}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply reviewed AI fill suggestions to the plan
+         * @description With an API key, it needs the `plan: write` permission.
+         */
+        post: operations["applyPlanAiFill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plan/ai-fill/{runId}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline or stop an AI fill run
+         * @description With an API key, it needs the `plan: write` permission.
+         */
+        post: operations["declinePlanAiFill"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9809,6 +9893,145 @@ export interface components {
             }[];
             /** @description Recipes not to suggest: ideas already showing, or ones passed over. */
             exclude?: string[];
+        };
+        AiFillRunList: {
+            runs: components["schemas"]["AiFillRun"][];
+        };
+        /**
+         * @example {
+         *       "id": "0199e8b0-5a10-7a01-8b00-00000000000b",
+         *       "status": "ready",
+         *       "week": "2026-10-12",
+         *       "total": 2,
+         *       "done": 2,
+         *       "phase": null,
+         *       "suggestions": [
+         *         {
+         *           "date": "2026-10-15",
+         *           "meal": "dinner",
+         *           "recipe": {
+         *             "id": "0199e8b0-5a10-7a01-8b00-000000000006",
+         *             "slug": "lemon-chicken",
+         *             "name": "Lemon Chicken",
+         *             "photo": null,
+         *             "servings": 4,
+         *             "totalMinutes": 50
+         *           },
+         *           "withRecipe": {
+         *             "id": "0199e8b0-5a10-7a01-8b00-000000000007",
+         *             "slug": "garlic-rice",
+         *             "name": "Garlic Rice"
+         *           },
+         *           "why": [
+         *             {
+         *               "kind": "notLately",
+         *               "weeks": 5
+         *             },
+         *             {
+         *               "kind": "rated",
+         *               "stars": 5
+         *             }
+         *           ]
+         *         }
+         *       ],
+         *       "error": null,
+         *       "appliedAt": null,
+         *       "createdAt": "2026-10-15T18:30:00.000Z",
+         *       "finishedAt": "2026-10-15T18:30:00.000Z"
+         *     }
+         */
+        AiFillRun: {
+            id: string;
+            /** @enum {string} */
+            status: "running" | "ready" | "failed" | "cancelled" | "applied" | "declined";
+            /** @example 2026-10-15 */
+            week: string | null;
+            total: number;
+            done: number;
+            /** @enum {string|null} */
+            phase: "requesting_large_model" | "fallback_small_model" | "merging" | null;
+            suggestions: {
+                /** @example 2026-10-15 */
+                date: string;
+                meal: components["schemas"]["Meal"];
+                recipe: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                    photo: string | null;
+                    servings: number | null;
+                    totalMinutes: number | null;
+                };
+                withRecipe: {
+                    id: string;
+                    slug: string;
+                    name: string;
+                } | null;
+                why: components["schemas"]["Reason"][];
+            }[];
+            error: string | null;
+            /** Format: date-time */
+            appliedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+        };
+        /**
+         * @example {
+         *       "slots": [
+         *         {
+         *           "date": "2026-10-15",
+         *           "meal": "dinner"
+         *         },
+         *         {
+         *           "date": "2026-10-16",
+         *           "meal": "dinner"
+         *         }
+         *       ],
+         *       "week": "2026-10-12"
+         *     }
+         */
+        AiFillStart: {
+            slots: {
+                /** @example 2026-10-15 */
+                date: string;
+                meal: components["schemas"]["Meal"];
+            }[];
+            exclude?: string[];
+            /**
+             * @description The week this fill is for, for display.
+             * @example 2026-10-15
+             */
+            week?: string | null;
+        };
+        /**
+         * @example {
+         *       "entries": [
+         *         {
+         *           "date": "2026-10-15",
+         *           "meal": "dinner",
+         *           "recipe": "0199e8b0-5a10-7a01-8b00-000000000006",
+         *           "withRecipe": "0199e8b0-5a10-7a01-8b00-000000000007",
+         *           "why": [
+         *             {
+         *               "kind": "notLately",
+         *               "weeks": 5
+         *             }
+         *           ]
+         *         }
+         *       ]
+         *     }
+         */
+        AiFillApply: {
+            entries: {
+                /** @example 2026-10-15 */
+                date: string;
+                meal: components["schemas"]["Meal"];
+                recipe: string;
+                withRecipe?: string | null;
+                why?: components["schemas"]["Reason"][] | null;
+            }[];
         };
         /**
          * @example {
@@ -20570,13 +20793,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description AI meal ideas, in the slots' order. */
+            /** @description Server-sent events: `status` (`{"status":"requesting_large_model"|"fallback_small_model"}`), `result` (`{"suggestions":[...]}`), or `error` (`{"code","message","fields"}`). */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Suggestions"];
+                    "text/event-stream": string;
                 };
             };
             /** @description Not signed in. */
@@ -20590,6 +20813,240 @@ export interface operations {
             };
             /** @description Not allowed. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listPlanAiFills: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description AI fill runs. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiFillRunList"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    startPlanAiFill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiFillStart"];
+            };
+        };
+        responses: {
+            /** @description AI fill started. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiFillRun"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPlanAiFill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The AI fill run. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiFillRun"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such AI fill run in this household. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    applyPlanAiFill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiFillApply"];
+            };
+        };
+        responses: {
+            /** @description Meals added to the plan. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanEntries"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such AI fill run in this household. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    declinePlanAiFill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Declined. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        ok: true;
+                    };
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such AI fill run in this household. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

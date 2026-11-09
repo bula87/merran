@@ -576,3 +576,116 @@ export const AutoplanSchema = z
       last: AUTOPLAN_RUN,
     },
   })
+
+// Background AI fill-the-week runs: generate suggestions for review, then apply.
+
+const AiFillSuggestionSchema = z.object({
+  date: Day,
+  meal: MealSchema,
+  recipe: z.object({
+    id: z.string(),
+    slug: z.string(),
+    name: z.string(),
+    photo: z.string().nullable(),
+    servings: z.number().nullable(),
+    totalMinutes: z.number().int().nullable(),
+  }),
+  withRecipe: z
+    .object({ id: z.string(), slug: z.string(), name: z.string() })
+    .nullable(),
+  why,
+})
+
+export const AiFillStartSchema = z
+  .object({
+    slots: z.array(SlotSchema).min(1).max(56),
+    exclude: z.array(z.string()).max(200).optional(),
+    week: Day.nullish().openapi({
+      description: "The week this fill is for, for display.",
+    }),
+  })
+  .openapi("AiFillStart", {
+    example: {
+      slots: [
+        { date: "2026-10-15", meal: "dinner" },
+        { date: "2026-10-16", meal: "dinner" },
+      ],
+      week: "2026-10-12",
+    },
+  })
+
+export const AiFillRunSchema = z
+  .object({
+    id: z.string(),
+    status: z.enum([
+      "running",
+      "ready",
+      "failed",
+      "cancelled",
+      "applied",
+      "declined",
+    ]),
+    week: Day.nullable(),
+    total: z.number().int(),
+    done: z.number().int(),
+    phase: z
+      .enum(["requesting_large_model", "fallback_small_model", "merging"])
+      .nullable(),
+    suggestions: z.array(AiFillSuggestionSchema),
+    error: z.string().nullable(),
+    appliedAt: z.iso.datetime().nullable(),
+    createdAt: z.iso.datetime(),
+    finishedAt: z.iso.datetime().nullable(),
+  })
+  .openapi("AiFillRun", {
+    example: {
+      id: IDS.job,
+      status: "ready",
+      week: "2026-10-12",
+      total: 2,
+      done: 2,
+      phase: null,
+      suggestions: [SUGGESTION],
+      error: null,
+      appliedAt: null,
+      createdAt: TIMES.now,
+      finishedAt: TIMES.now,
+    },
+  })
+
+export const AiFillRunListSchema = z
+  .object({ runs: z.array(AiFillRunSchema) })
+  .openapi("AiFillRunList")
+
+export const AiFillRunParam = z.object({
+  runId: z.uuid().openapi({ param: { name: "runId", in: "path" } }),
+})
+
+export const AiFillApplySchema = z
+  .object({
+    entries: z
+      .array(
+        z.object({
+          date: Day,
+          meal: MealSchema,
+          recipe: z.string(),
+          withRecipe: z.string().nullish(),
+          why: why.nullish(),
+        })
+      )
+      .min(1, "Choose at least one meal to add.")
+      .max(56),
+  })
+  .openapi("AiFillApply", {
+    example: {
+      entries: [
+        {
+          date: "2026-10-15",
+          meal: "dinner",
+          recipe: IDS.lemonChicken,
+          withRecipe: IDS.garlicRice,
+          why: [{ kind: "notLately", weeks: 5 }],
+        },
+      ],
+    },
+  })

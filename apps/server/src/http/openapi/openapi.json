@@ -10145,6 +10145,360 @@
           ]
         }
       },
+      "AiFillRunList": {
+        "type": "object",
+        "properties": {
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiFillRun"
+            }
+          }
+        },
+        "required": [
+          "runs"
+        ]
+      },
+      "AiFillRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "ready",
+              "failed",
+              "cancelled",
+              "applied",
+              "declined"
+            ]
+          },
+          "week": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-10-15"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "done": {
+            "type": "integer"
+          },
+          "phase": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "requesting_large_model",
+              "fallback_small_model",
+              "merging",
+              null
+            ]
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "example": "2026-10-15"
+                },
+                "meal": {
+                  "$ref": "#/components/schemas/Meal"
+                },
+                "recipe": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "photo": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "servings": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "totalMinutes": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "slug",
+                    "name",
+                    "photo",
+                    "servings",
+                    "totalMinutes"
+                  ]
+                },
+                "withRecipe": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "slug",
+                    "name"
+                  ]
+                },
+                "why": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reason"
+                  },
+                  "maxItems": 5
+                }
+              },
+              "required": [
+                "date",
+                "meal",
+                "recipe",
+                "withRecipe",
+                "why"
+              ]
+            }
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "appliedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "week",
+          "total",
+          "done",
+          "phase",
+          "suggestions",
+          "error",
+          "appliedAt",
+          "createdAt",
+          "finishedAt"
+        ],
+        "example": {
+          "id": "0199e8b0-5a10-7a01-8b00-00000000000b",
+          "status": "ready",
+          "week": "2026-10-12",
+          "total": 2,
+          "done": 2,
+          "phase": null,
+          "suggestions": [
+            {
+              "date": "2026-10-15",
+              "meal": "dinner",
+              "recipe": {
+                "id": "0199e8b0-5a10-7a01-8b00-000000000006",
+                "slug": "lemon-chicken",
+                "name": "Lemon Chicken",
+                "photo": null,
+                "servings": 4,
+                "totalMinutes": 50
+              },
+              "withRecipe": {
+                "id": "0199e8b0-5a10-7a01-8b00-000000000007",
+                "slug": "garlic-rice",
+                "name": "Garlic Rice"
+              },
+              "why": [
+                {
+                  "kind": "notLately",
+                  "weeks": 5
+                },
+                {
+                  "kind": "rated",
+                  "stars": 5
+                }
+              ]
+            }
+          ],
+          "error": null,
+          "appliedAt": null,
+          "createdAt": "2026-10-15T18:30:00.000Z",
+          "finishedAt": "2026-10-15T18:30:00.000Z"
+        }
+      },
+      "AiFillStart": {
+        "type": "object",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "example": "2026-10-15"
+                },
+                "meal": {
+                  "$ref": "#/components/schemas/Meal"
+                }
+              },
+              "required": [
+                "date",
+                "meal"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 56
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200
+          },
+          "week": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-10-15",
+            "description": "The week this fill is for, for display."
+          }
+        },
+        "required": [
+          "slots"
+        ],
+        "example": {
+          "slots": [
+            {
+              "date": "2026-10-15",
+              "meal": "dinner"
+            },
+            {
+              "date": "2026-10-16",
+              "meal": "dinner"
+            }
+          ],
+          "week": "2026-10-12"
+        }
+      },
+      "AiFillApply": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "example": "2026-10-15"
+                },
+                "meal": {
+                  "$ref": "#/components/schemas/Meal"
+                },
+                "recipe": {
+                  "type": "string"
+                },
+                "withRecipe": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "why": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "$ref": "#/components/schemas/Reason"
+                  },
+                  "maxItems": 5
+                }
+              },
+              "required": [
+                "date",
+                "meal",
+                "recipe"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 56
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "example": {
+          "entries": [
+            {
+              "date": "2026-10-15",
+              "meal": "dinner",
+              "recipe": "0199e8b0-5a10-7a01-8b00-000000000006",
+              "withRecipe": "0199e8b0-5a10-7a01-8b00-000000000007",
+              "why": [
+                {
+                  "kind": "notLately",
+                  "weeks": 5
+                }
+              ]
+            }
+          ]
+        }
+      },
       "ProposalList": {
         "type": "object",
         "properties": {
@@ -27570,6 +27924,368 @@
             }
           }
         }
+      }
+    },
+    "/api/plan/ai-fill": {
+      "get": {
+        "operationId": "listPlanAiFills",
+        "tags": [
+          "Plan"
+        ],
+        "summary": "List active and reviewable AI fill runs",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "plan:read",
+        "responses": {
+          "200": {
+            "description": "AI fill runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiFillRunList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "With an API key, it needs the `plan: read` permission."
+      },
+      "post": {
+        "operationId": "startPlanAiFill",
+        "tags": [
+          "Plan"
+        ],
+        "summary": "Start filling the week with AI in the background",
+        "description": "Generates AI meal suggestions for the given slots in the background. Poll the run or list active runs to review suggestions, then apply or decline them. With an API key, it needs the `plan: write` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "plan:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiFillStart"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "AI fill started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiFillRun"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plan/ai-fill/{runId}": {
+      "get": {
+        "operationId": "getPlanAiFill",
+        "tags": [
+          "Plan"
+        ],
+        "summary": "Get an AI fill run",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "plan:read",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The AI fill run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiFillRun"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such AI fill run in this household.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "With an API key, it needs the `plan: read` permission."
+      }
+    },
+    "/api/plan/ai-fill/{runId}/apply": {
+      "post": {
+        "operationId": "applyPlanAiFill",
+        "tags": [
+          "Plan"
+        ],
+        "summary": "Apply reviewed AI fill suggestions to the plan",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "plan:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiFillApply"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Meals added to the plan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanEntries"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such AI fill run in this household.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "With an API key, it needs the `plan: write` permission."
+      }
+    },
+    "/api/plan/ai-fill/{runId}/decline": {
+      "post": {
+        "operationId": "declinePlanAiFill",
+        "tags": [
+          "Plan"
+        ],
+        "summary": "Decline or stop an AI fill run",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "plan:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Declined.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such AI fill run in this household.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "With an API key, it needs the `plan: write` permission."
       }
     },
     "/api/plan/unmarked": {

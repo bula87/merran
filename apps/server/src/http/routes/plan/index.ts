@@ -9,6 +9,7 @@ import nextRoutes from "./next/index.ts"
 import repeatRoutes from "./repeat/index.ts"
 import restoreRoutes from "./restore/index.ts"
 import suggestRoutes from "./suggest/index.ts"
+import aiFillRoutes from "./ai-fill/index.ts"
 import unmarkedRoutes from "./unmarked/index.ts"
 
 export default (router: Router, deps: AppDeps) => {
@@ -21,5 +22,6 @@ export default (router: Router, deps: AppDeps) => {
   clearRoutes(router, deps)
   restoreRoutes(router, deps)
   suggestRoutes(router, deps)
+  aiFillRoutes(router, deps)
   unmarkedRoutes(router, deps)
 }

@@ -1323,6 +1323,33 @@
         "fallbackSmall": "Przełączanie na mały model..."
       }
     },
+    "aiFill": {
+      "banner": {
+        "working": "AI układa Twój tydzień…",
+        "fallback": "AI pracuje (używa modelu zapasowego)…",
+        "progress": "{{done}}/{{total}} posiłków",
+        "ready": "Plan AI jest gotowy do sprawdzenia."
+      },
+      "review": "Sprawdź",
+      "reviewTitle": "Sprawdź plan AI",
+      "reviewDescription": "Sprawdź posiłki wybrane przez AI. Odznacz te, których nie chcesz, a potem zaakceptuj lub odrzuć.",
+      "include": "Uwzględnij {{when}}",
+      "accept_one": "Zaakceptuj {{count}} posiłek",
+      "accept_few": "Zaakceptuj {{count}} posiłki",
+      "accept_many": "Zaakceptuj {{count}} posiłków",
+      "accept_other": "Zaakceptuj {{count}} posiłku",
+      "accept": "Zaakceptuj {{count}} posiłków",
+      "decline": "Odrzuć",
+      "dismiss": "Zamknij",
+      "applied_one": "Dodano {{count}} posiłek do planu.",
+      "applied_few": "Dodano {{count}} posiłki do planu.",
+      "applied_many": "Dodano {{count}} posiłków do planu.",
+      "applied_other": "Dodano {{count}} posiłku do planu.",
+      "applied": "Dodano {{count}} posiłków do planu.",
+      "failed": "AI nie mogło ułożyć tygodnia.",
+      "started": "AI układa Twój tydzień w tle.",
+      "startFailed": "Nie udało się uruchomić planowania AI. Spróbuj ponownie."
+    },
     "why": {
       "theme": "{{label}}",
       "themeMissed": "{{label}}: nic jeszcze nie pasuje",

@@ -1291,6 +1291,29 @@
         "fallbackSmall": "Falling back to small model..."
       }
     },
+    "aiFill": {
+      "banner": {
+        "working": "AI is filling your week…",
+        "fallback": "AI is working (using backup model)…",
+        "progress": "{{done}}/{{total}} meals",
+        "ready": "Your AI meal plan is ready to review."
+      },
+      "review": "Review",
+      "reviewTitle": "Review AI plan",
+      "reviewDescription": "Check the meals AI picked for your week. Uncheck anything you don't want, then accept or decline.",
+      "include": "Include {{when}}",
+      "accept_one": "Accept {{count}} meal",
+      "accept_other": "Accept {{count}} meals",
+      "accept": "Accept {{count}} meals",
+      "decline": "Decline",
+      "dismiss": "Dismiss",
+      "applied_one": "Added {{count}} meal to your plan.",
+      "applied_other": "Added {{count}} meals to your plan.",
+      "applied": "Added {{count}} meals to your plan.",
+      "failed": "AI couldn't fill the week.",
+      "started": "AI is filling your week in the background.",
+      "startFailed": "Couldn't start AI fill. Try again."
+    },
     "why": {
       "theme": "{{label}}",
       "themeMissed": "{{label}}: nothing fits yet",

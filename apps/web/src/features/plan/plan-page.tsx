@@ -48,6 +48,14 @@ import {
   calendarSlotTimesQuery,
 } from "./calendar-queries"
 import { MoveMealsDialog } from "./change-meal-dialog"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+
+import { myProfileQuery } from "@/features/account/personal-profile"
+import { useAssistantPage } from "@/features/assistant/assistant-context"
+import { formatPrice, useCosts } from "@/features/stores/queries"
+import { ApiError } from "@/lib/api/client"
+
 import { averageCalories } from "./calories"
 import { DayCard, PastDays, PoolCard } from "./day-card"
 import { MealDragProvider } from "./drag/meal-drag"
@@ -55,6 +63,8 @@ import { FillWeekDialog } from "./fill-week-dialog"
 import { formatDay, formatWeek } from "./format"
 import { NextMealCard } from "./next-meal-card"
 import { NotFilledNote, useNotFilled } from "./not-filled"
+import { AiFillBanner } from "./ai-fill-banner"
+import { activePlanAiFillsQuery, startPlanAiFill } from "./ai-fill"
 import {
   planQuery,
   useHouseholdClock,
@@ -62,8 +72,6 @@ import {
   type PlanEntry,
 } from "./queries"
 import { usePlanActions } from "./use-plan-actions"
-import { useAssistantPage } from "@/features/assistant/assistant-context"
-import { formatPrice, useCosts } from "@/features/stores/queries"
 
 /**
  * The week plan: the week to show and how full it is, what's next, the
@@ -72,6 +80,7 @@ import { formatPrice, useCosts } from "@/features/stores/queries"
  */
 export function PlanPage({ week: asked }: { week?: string }) {
   const { t, i18n } = useTranslation()
+  const queryClient = useQueryClient()
   const clock = useHouseholdClock()
   const notFilled = useNotFilled()
   const actions = usePlanActions()
@@ -109,9 +118,9 @@ export function PlanPage({ week: asked }: { week?: string }) {
   const [adding, setAdding] = React.useState<Slot | null>(null)
   const [moving, setMoving] = React.useState(false)
   const [filling, setFilling] = React.useState(false)
-  const [aiFilling, setAiFilling] = React.useState(false)
   const [listing, setListing] = React.useState(false)
   const [showPast, setShowPast] = React.useState(false)
+  const [startingAiFill, setStartingAiFill] = React.useState(false)
 
   const thisWeek = week === clock.thisWeek
   const label = thisWeek
@@ -132,6 +141,69 @@ export function PlanPage({ week: asked }: { week?: string }) {
   const picked = [...selection.picked]
   // A week with days still to come can be filled.
   const fillable = days.at(-1)! >= clock.today
+  const profile = useQuery(myProfileQuery)
+  const aiFillRuns = useQuery(activePlanAiFillsQuery).data?.runs ?? []
+  const aiFillBusy =
+    startingAiFill ||
+    aiFillRuns.some((run) => run.status === "running" || run.status === "ready")
+
+  async function startAiFillWeek() {
+    if (startingAiFill || aiFillBusy) return
+    setStartingAiFill(true)
+    try {
+      let profileData = profile.data
+      if (!profileData) {
+        try {
+          profileData = await profile.refetch().then((r) => r.data)
+        } catch {
+          // Use defaults if profile can't be loaded.
+        }
+      }
+      const fromProfile = (profileData?.mealsPerDay ?? []).filter(
+        (meal): meal is Meal => clock.meals.includes(meal as Meal)
+      )
+      const chosen: Meal[] =
+        fromProfile.length > 0
+          ? fromProfile
+          : clock.meals.includes("dinner")
+            ? ["dinner"]
+            : [...clock.meals]
+      const upcoming = days.filter((day) => day >= clock.today)
+      const taken = new Set(
+        entries
+          .filter((entry) => !entry.anyDay)
+          .map((entry) => `${entry.date}:${entry.meal}`)
+      )
+      const skipNight = (slot: { date: string; meal: Meal }) =>
+        slot.meal === "dinner" && themes[dayOfWeek(slot.date)]?.kind === "skip"
+      const slots = upcoming.flatMap((date) =>
+        clock.meals
+          .filter((meal) => chosen.includes(meal))
+          .map((meal) => ({ date, meal }))
+          .filter(
+            (slot) =>
+              !taken.has(`${slot.date}:${slot.meal}`) && !skipNight(slot)
+          )
+      )
+      if (slots.length === 0) {
+        toast(t("plan.fill.allPlanned"))
+        return
+      }
+      await startPlanAiFill({ slots, week })
+      await queryClient.invalidateQueries({ queryKey: ["plan-ai-fill"] })
+      toast.success(
+        t("plan.aiFill.started", "AI is filling your week in the background.")
+      )
+    } catch (err) {
+      if (!(err instanceof ApiError)) throw err
+      toast.error(
+        err.message ||
+          t("plan.aiFill.startFailed", "Couldn't start AI fill. Try again.")
+      )
+    } finally {
+      setStartingAiFill(false)
+    }
+  }
 
   const bulk = async (action: Parameters<typeof actions.bulk>[1]) => {
     if (await actions.bulk(picked, action)) selection.done()
@@ -176,7 +248,11 @@ export function PlanPage({ week: asked }: { week?: string }) {
                     />
                     {t("plan.fill.button")}
                   </Button>
-                  <Button variant="outline" onClick={() => setAiFilling(true)}>
+                  <Button
+                    variant="outline"
+                    disabled={aiFillBusy}
+                    onClick={() => void startAiFillWeek()}
+                  >
                     <HugeiconsIcon
                       icon={AiMagicIcon}
                       strokeWidth={2}
@@ -206,7 +282,10 @@ export function PlanPage({ week: asked }: { week?: string }) {
                     {t("plan.selectMeals")}
                   </DropdownMenuItem>
                   {fillable && (
-                    <DropdownMenuItem onClick={() => setAiFilling(true)}>
+                    <DropdownMenuItem
+                      disabled={aiFillBusy}
+                      onClick={() => void startAiFillWeek()}
+                    >
                       <HugeiconsIcon icon={AiMagicIcon} strokeWidth={2} />
                       {t("plan.fill.aiButton", "AI Fill the week")}
                     </DropdownMenuItem>
@@ -273,6 +352,7 @@ export function PlanPage({ week: asked }: { week?: string }) {
           )}
         </div>
 
+        <AiFillBanner />
         {thisWeek && !selection.selecting && <NextMealCard />}
 
         {plan.isPending ? (
@@ -350,14 +430,6 @@ export function PlanPage({ week: asked }: { week?: string }) {
         days={days}
         entries={entries}
         themes={themes}
-      />
-      <FillWeekDialog
-        open={aiFilling}
-        onOpenChange={setAiFilling}
-        days={days}
-        entries={entries}
-        themes={themes}
-        ai
       />
       {moving && (
         <MoveMealsDialog
