@@ -119,7 +119,16 @@ export async function calendarFeed(
     const start = calendarInstant(day, time.start, household.timeZone)
     const end = new Date(start.getTime() + time.minutes * 60_000)
     const names = dishes.map(displayName)
-    const label = meal.charAt(0).toUpperCase() + meal.slice(1)
+    const labels: Record<string, string> = {
+      breakfast: "Breakfast",
+      "morning-snack": "Mid-morning snack",
+      lunch: "Lunch",
+      "afternoon-snack": "Afternoon snack",
+      dinner: "Dinner",
+    }
+    const label =
+      labels[meal] ??
+      meal.charAt(0).toUpperCase() + meal.slice(1).replace(/-/g, " ")
     const short = `${label}: ${names.join(" + ")}`
     const summary =
       short.length <= 85 ? short : `${label}: ${names.length} dishes`

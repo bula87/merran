@@ -2029,9 +2029,10 @@
               "type": "string",
               "enum": [
                 "breakfast",
+                "morning-snack",
                 "lunch",
-                "dinner",
-                "snack"
+                "afternoon-snack",
+                "dinner"
               ]
             },
             "description": "The meals filled for it (by Fill the week and Plan each week), in a day's order: every meal until it opts out of some. Any meal can be planned by hand."
@@ -2110,9 +2111,10 @@
               "type": "string",
               "enum": [
                 "breakfast",
+                "morning-snack",
                 "lunch",
-                "dinner",
-                "snack"
+                "afternoon-snack",
+                "dinner"
               ]
             },
             "minItems": 1,
@@ -5331,9 +5333,10 @@
                   "type": "string",
                   "enum": [
                     "breakfast",
+                    "morning-snack",
                     "lunch",
-                    "dinner",
-                    "snack"
+                    "afternoon-snack",
+                    "dinner"
                   ]
                 },
                 "name": {
@@ -8678,9 +8681,10 @@
         "type": "string",
         "enum": [
           "breakfast",
+          "morning-snack",
           "lunch",
-          "dinner",
-          "snack"
+          "afternoon-snack",
+          "dinner"
         ]
       },
       "PlanStatus": {
@@ -8923,7 +8927,7 @@
               "$ref": "#/components/schemas/Meal"
             },
             "minItems": 1,
-            "maxItems": 4,
+            "maxItems": 5,
             "description": "The meals it fills, of those the household plans."
           },
           "addToList": {
@@ -9042,7 +9046,7 @@
               "$ref": "#/components/schemas/Meal"
             },
             "minItems": 1,
-            "maxItems": 4,
+            "maxItems": 5,
             "description": "The meals it fills, of those the household plans."
           },
           "addToList": {
@@ -9099,17 +9103,21 @@
               "start": "08:00",
               "minutes": 30
             },
+            "morning-snack": {
+              "start": "10:30",
+              "minutes": 20
+            },
             "lunch": {
-              "start": "12:00",
+              "start": "12:30",
               "minutes": 45
             },
-            "dinner": {
-              "start": "18:00",
-              "minutes": 60
+            "afternoon-snack": {
+              "start": "15:30",
+              "minutes": 20
             },
-            "snack": {
-              "start": "15:00",
-              "minutes": 30
+            "dinner": {
+              "start": "18:30",
+              "minutes": 60
             }
           },
           "publicUrlReady": true,
@@ -9125,6 +9133,28 @@
         "type": "object",
         "properties": {
           "breakfast": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              "minutes": {
+                "type": "integer",
+                "minimum": 15,
+                "maximum": 240
+              }
+            },
+            "required": [
+              "start",
+              "minutes"
+            ],
+            "example": {
+              "start": "18:00",
+              "minutes": 60
+            }
+          },
+          "morning-snack": {
             "type": "object",
             "properties": {
               "start": {
@@ -9168,7 +9198,7 @@
               "minutes": 60
             }
           },
-          "dinner": {
+          "afternoon-snack": {
             "type": "object",
             "properties": {
               "start": {
@@ -9190,7 +9220,7 @@
               "minutes": 60
             }
           },
-          "snack": {
+          "dinner": {
             "type": "object",
             "properties": {
               "start": {
@@ -9215,9 +9245,10 @@
         },
         "required": [
           "breakfast",
+          "morning-snack",
           "lunch",
-          "dinner",
-          "snack"
+          "afternoon-snack",
+          "dinner"
         ]
       },
       "CalendarLink": {
@@ -9275,9 +9306,10 @@
             "type": "string",
             "enum": [
               "breakfast",
+              "morning-snack",
               "lunch",
-              "dinner",
-              "snack"
+              "afternoon-snack",
+              "dinner"
             ]
           },
           "start": {

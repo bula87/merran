@@ -963,7 +963,7 @@ function cookingMeal(meals: readonly Meal[], hour: number): Meal {
   const now = mealOfTheHour(hour)
   if (meals.includes(now)) return now
   const before = meals.filter(
-    (meal) => meal !== "snack" && MEALS.indexOf(meal) < MEALS.indexOf(now)
+    (meal) => MEALS.indexOf(meal) < MEALS.indexOf(now)
   )
-  return before.at(-1) ?? meals.find((meal) => meal !== "snack") ?? meals[0]!
+  return before.at(-1) ?? meals[0]!
 }

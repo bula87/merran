@@ -53,9 +53,10 @@ const NO_REPEAT_DAYS = 14
 /** Tags that say which meal a recipe is for. */
 const MEAL_TAGS: Record<Meal, string[]> = {
   breakfast: ["breakfast", "brunch"],
+  "morning-snack": ["snack", "breakfast", "brunch", "smoothie", "fruit"],
   lunch: ["lunch", "salad", "sandwich", "soup"],
+  "afternoon-snack": ["snack", "appetizer", "dessert", "smoothie", "fruit"],
   dinner: ["dinner", "main", "main course", "main dish", "entree", "supper"],
-  snack: ["snack", "appetizer", "dessert"],
 }
 
 /** Tags for parts of a meal rather than meals: never suggested on their own. */
@@ -108,17 +109,19 @@ export type Suggestion = Slot & {
 }
 
 /**
- * Which recipes suit a meal. Breakfast, lunch and snacks only take recipes
- * tagged for them; dinner takes anything that isn't clearly another meal.
+ * Which recipes suit a meal. Non-dinner meals prefer recipes tagged for
+ * them; dinner takes anything that isn't clearly another meal or drink.
  */
 function fitsMeal(recipe: Candidate, meal: Meal) {
   if (MEAL_TAGS[meal].some((tag) => recipe.tags.includes(tag))) return true
   if (meal !== "dinner") return false
   const other = [
     ...MEAL_TAGS.breakfast,
-    ...MEAL_TAGS.snack,
+    ...MEAL_TAGS["morning-snack"],
+    ...MEAL_TAGS["afternoon-snack"],
     "drink",
     "cocktail",
+    "beverage",
   ]
   return !other.some((tag) => recipe.tags.includes(tag))
 }

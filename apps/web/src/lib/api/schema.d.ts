@@ -6167,7 +6167,7 @@ export interface components {
             timeZone: string;
             weekStartsOn: number;
             /** @description The meals filled for it (by Fill the week and Plan each week), in a day's order: every meal until it opts out of some. Any meal can be planned by hand. */
-            meals: ("breakfast" | "lunch" | "dinner" | "snack")[];
+            meals: ("breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner")[];
             /** @description Whether checking something off on the list puts it in the pantry, and unchecking takes it back out. On unless the household turns it off. */
             putAwayWhenChecked: boolean;
             /** @enum {string} */
@@ -6186,7 +6186,7 @@ export interface components {
             timeZone?: string;
             weekStartsOn?: number;
             /** @description The meals filled for it. */
-            meals?: ("breakfast" | "lunch" | "dinner" | "snack")[];
+            meals?: ("breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner")[];
             /** @description Whether checking something off on the list puts it in the pantry, and unchecking takes it back out. */
             putAwayWhenChecked?: boolean;
         };
@@ -7551,7 +7551,7 @@ export interface components {
                 date: string;
                 anyDay: boolean;
                 /** @enum {string} */
-                meal: "breakfast" | "lunch" | "dinner" | "snack";
+                meal: "breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner";
                 name: string;
             }[];
             /** @description How many are on the list already. */
@@ -9124,7 +9124,7 @@ export interface components {
             variants: components["schemas"]["MealRecipe"][];
         };
         /** @enum {string} */
-        Meal: "breakfast" | "lunch" | "dinner" | "snack";
+        Meal: "breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner";
         /** @enum {string} */
         PlanStatus: "planned" | "cooked" | "skipped";
         /**
@@ -9266,17 +9266,21 @@ export interface components {
          *           "start": "08:00",
          *           "minutes": 30
          *         },
+         *         "morning-snack": {
+         *           "start": "10:30",
+         *           "minutes": 20
+         *         },
          *         "lunch": {
-         *           "start": "12:00",
+         *           "start": "12:30",
          *           "minutes": 45
          *         },
-         *         "dinner": {
-         *           "start": "18:00",
-         *           "minutes": 60
+         *         "afternoon-snack": {
+         *           "start": "15:30",
+         *           "minutes": 20
          *         },
-         *         "snack": {
-         *           "start": "15:00",
-         *           "minutes": 30
+         *         "dinner": {
+         *           "start": "18:30",
+         *           "minutes": 60
          *         }
          *       },
          *       "publicUrlReady": true,
@@ -9311,6 +9315,16 @@ export interface components {
              *       "minutes": 60
              *     }
              */
+            "morning-snack": {
+                start: string;
+                minutes: number;
+            };
+            /**
+             * @example {
+             *       "start": "18:00",
+             *       "minutes": 60
+             *     }
+             */
             lunch: {
                 start: string;
                 minutes: number;
@@ -9321,7 +9335,7 @@ export interface components {
              *       "minutes": 60
              *     }
              */
-            dinner: {
+            "afternoon-snack": {
                 start: string;
                 minutes: number;
             };
@@ -9331,7 +9345,7 @@ export interface components {
              *       "minutes": 60
              *     }
              */
-            snack: {
+            dinner: {
                 start: string;
                 minutes: number;
             };
@@ -9370,7 +9384,7 @@ export interface components {
             /** Format: date */
             date: string;
             /** @enum {string} */
-            meal: "breakfast" | "lunch" | "dinner" | "snack";
+            meal: "breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner";
             start: string;
             minutes: number;
         };

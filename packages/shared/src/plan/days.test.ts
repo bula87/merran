@@ -7,6 +7,7 @@ import {
   isDay,
   mealOfTheHour,
   nextMeal,
+  normalizeMeal,
   plannedMeals,
   weekDays,
   weekStartOf,
@@ -64,18 +65,36 @@ describe("days", () => {
 describe("meals", () => {
   test("go by the hour", () => {
     expect(mealOfTheHour(7)).toBe("breakfast")
+    expect(mealOfTheHour(10)).toBe("morning-snack")
     expect(mealOfTheHour(12)).toBe("lunch")
+    expect(mealOfTheHour(15)).toBe("afternoon-snack")
     expect(mealOfTheHour(18)).toBe("dinner")
   })
 
   test("a household plans every meal, until it opts out", () => {
-    const every = ["breakfast", "lunch", "dinner", "snack"]
+    const every = [
+      "breakfast",
+      "morning-snack",
+      "lunch",
+      "afternoon-snack",
+      "dinner",
+    ]
     expect(plannedMeals(undefined)).toEqual(every)
     expect(plannedMeals([])).toEqual(every)
     expect(plannedMeals(["dinner", "breakfast"])).toEqual([
       "breakfast",
       "dinner",
     ])
+    expect(plannedMeals(["snack", "dinner"])).toEqual([
+      "afternoon-snack",
+      "dinner",
+    ])
+  })
+
+  test("normalizes legacy snack meal ids", () => {
+    expect(normalizeMeal("snack")).toBe("afternoon-snack")
+    expect(normalizeMeal("lunch")).toBe("lunch")
+    expect(normalizeMeal("unknown")).toBeNull()
   })
 
   test("what's next is the first still planned from now on", () => {
@@ -95,16 +114,16 @@ describe("meals", () => {
     const plan = [
       meal("2026-10-15", "lunch"),
       meal("2026-10-15", "dinner", { status: "cooked" }),
-      meal("2026-10-15", "snack"),
+      meal("2026-10-15", "afternoon-snack"),
       meal("2026-10-12", "dinner", { anyDay: true }),
       meal("2026-10-16", "dinner", { position: 1 }),
       meal("2026-10-16", "dinner"),
     ]
-    // At 4 p.m. lunch is past, dinner's cooked: tomorrow's first dinner.
+    // At 4 p.m. (afternoon snack time) lunch is past, dinner's cooked:
+    // today's afternoon snack is next.
     expect(nextMeal(plan, { today: "2026-10-15", hour: 16 })?.name).toBe(
-      "2026-10-16 dinner"
+      "2026-10-15 afternoon-snack"
     )
-    expect(nextMeal(plan, { today: "2026-10-15", hour: 16 })?.position).toBe(0)
     // At noon, today's lunch.
     expect(nextMeal(plan, { today: "2026-10-15", hour: 12 })?.name).toBe(
       "2026-10-15 lunch"

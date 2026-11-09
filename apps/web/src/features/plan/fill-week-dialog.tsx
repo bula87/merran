@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { formatMinutes } from "@/features/recipes/format"
+import { myProfileQuery } from "@/features/account/personal-profile"
 import { ApiError } from "@/lib/api/client"
 
 import { NeedsAi, useAiFor } from "@/features/ai/needs-ai"
@@ -115,9 +116,26 @@ function FillWeek({
   const actions = usePlanActions()
   const whyText = useWhyText()
   const aiFor = useAiFor("plan")
-  const [chosen, setChosen] = React.useState<Meal[]>(
-    clock.meals.includes("dinner") ? ["dinner"] : [...clock.meals]
-  )
+  const profile = useQuery({ ...myProfileQuery, enabled: ai })
+  const defaultChosen: Meal[] = clock.meals.includes("dinner")
+    ? ["dinner"]
+    : [...clock.meals]
+  const [chosen, setChosen] = React.useState<Meal[]>(defaultChosen)
+  const profileMealsApplied = React.useRef(false)
+  React.useEffect(() => {
+    if (!ai || profileMealsApplied.current) return
+    const fromProfile = (profile.data?.mealsPerDay ?? []).filter(
+      (meal): meal is Meal => clock.meals.includes(meal as Meal)
+    )
+    if (fromProfile.length > 0) {
+      setChosen(fromProfile)
+      setChanges({})
+      setPassed([])
+      profileMealsApplied.current = true
+      return
+    }
+    if (profile.isFetched) profileMealsApplied.current = true
+  }, [ai, profile.data?.mealsPerDay, profile.isFetched, clock.meals])
   /** Re-rolled ideas, and ideas left out (null), by slot. */
   const [changes, setChanges] = React.useState<
     Record<string, Suggestion | null>

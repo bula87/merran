@@ -8374,9 +8374,10 @@
           "collation": null,
           "enumItems": [
             "breakfast",
+            "morning-snack",
             "lunch",
-            "dinner",
-            "snack"
+            "afternoon-snack",
+            "dinner"
           ],
           "mappedType": "enum"
         },
@@ -8611,8 +8612,8 @@
       "checks": [
         {
           "name": "plan_entries_meal_check",
-          "expression": "`meal` in ('breakfast', 'lunch', 'dinner', 'snack')",
-          "definition": "check (`meal` in ('breakfast', 'lunch', 'dinner', 'snack'))",
+          "expression": "`meal` in ('breakfast', 'morning-snack', 'lunch', 'afternoon-snack', 'dinner')",
+          "definition": "check (`meal` in ('breakfast', 'morning-snack', 'lunch', 'afternoon-snack', 'dinner'))",
           "columnName": "meal"
         },
         {
@@ -8733,9 +8734,10 @@
           "collation": null,
           "enumItems": [
             "breakfast",
+            "morning-snack",
             "lunch",
-            "dinner",
-            "snack"
+            "afternoon-snack",
+            "dinner"
           ],
           "mappedType": "enum"
         },
@@ -8828,8 +8830,8 @@
       "checks": [
         {
           "name": "plan_slot_times_meal_check",
-          "expression": "`meal` in ('breakfast', 'lunch', 'dinner', 'snack')",
-          "definition": "check (`meal` in ('breakfast', 'lunch', 'dinner', 'snack'))",
+          "expression": "`meal` in ('breakfast', 'morning-snack', 'lunch', 'afternoon-snack', 'dinner')",
+          "definition": "check (`meal` in ('breakfast', 'morning-snack', 'lunch', 'afternoon-snack', 'dinner'))",
           "columnName": "meal"
         }
       ],

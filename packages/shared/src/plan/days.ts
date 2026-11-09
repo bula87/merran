@@ -3,11 +3,23 @@
 // everyone in it, wherever the server is.
 
 /** The meals a household can plan, in the order a day has them. */
-export const MEALS = ["breakfast", "lunch", "dinner", "snack"] as const
+export const MEALS = [
+  "breakfast",
+  "morning-snack",
+  "lunch",
+  "afternoon-snack",
+  "dinner",
+] as const
 export type Meal = (typeof MEALS)[number]
 
 /** What a household plans until it opts out of some: every meal. */
 export const DEFAULT_MEALS: readonly Meal[] = MEALS
+
+/** Map legacy meal ids kept in older plan/settings data. */
+export function normalizeMeal(meal: string): Meal | null {
+  if (meal === "snack") return "afternoon-snack"
+  return (MEALS as readonly string[]).includes(meal) ? (meal as Meal) : null
+}
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/
 
@@ -75,18 +87,25 @@ export function clockIn(timeZone: string, now = new Date()) {
   }
 }
 
-/** Breakfast until 11, lunch until 3, then dinner until midnight. */
+/** The meal of the hour in a typical day. */
 export function mealOfTheHour(hour: number): Meal {
-  if (hour < 11) return "breakfast"
+  if (hour < 10) return "breakfast"
+  if (hour < 12) return "morning-snack"
   if (hour < 15) return "lunch"
+  if (hour < 17) return "afternoon-snack"
   return "dinner"
 }
 
 /** The meals filled for a household, in a day's order: every meal until it opts out. */
 export function plannedMeals(
-  meals: readonly Meal[] | null | undefined
+  meals: readonly (Meal | string)[] | null | undefined
 ): Meal[] {
-  const picked = MEALS.filter((meal) => meals?.includes(meal))
+  const wanted = new Set(
+    (meals ?? [])
+      .map((meal) => normalizeMeal(meal))
+      .filter((meal): meal is Meal => meal !== null)
+  )
+  const picked = MEALS.filter((meal) => wanted.has(meal))
   return picked.length > 0 ? picked : [...DEFAULT_MEALS]
 }
 
@@ -101,27 +120,30 @@ export type PlannedMeal = {
 
 /**
  * The next meal to cook: the first one still planned from now on (today's
- * meals from the meal of the hour), not a snack and not one in the week's
- * pool. Cooking it, skipping it or the time going by moves it on.
+ * meals from the meal of the hour), not one in the week's pool. Cooking it,
+ * skipping it or the time going by moves it on.
  */
 export function nextMeal<T extends PlannedMeal>(
   meals: readonly T[],
   { today, hour }: { today: string; hour: number }
 ): T | null {
   const now = MEALS.indexOf(mealOfTheHour(hour))
-  const ahead = meals.filter(
-    (entry) =>
-      entry.status === "planned" &&
-      !entry.anyDay &&
-      entry.meal !== "snack" &&
-      (entry.date > today ||
-        (entry.date === today && MEALS.indexOf(entry.meal) >= now))
-  )
-  ahead.sort(
-    (a, b) =>
+  const ahead = meals.filter((entry) => {
+    if (entry.status !== "planned" || entry.anyDay) return false
+    const meal = normalizeMeal(entry.meal)
+    if (!meal) return false
+    return (
+      entry.date > today || (entry.date === today && MEALS.indexOf(meal) >= now)
+    )
+  })
+  ahead.sort((a, b) => {
+    const aMeal = normalizeMeal(a.meal) ?? a.meal
+    const bMeal = normalizeMeal(b.meal) ?? b.meal
+    return (
       a.date.localeCompare(b.date) ||
-      MEALS.indexOf(a.meal) - MEALS.indexOf(b.meal) ||
+      MEALS.indexOf(aMeal as Meal) - MEALS.indexOf(bMeal as Meal) ||
       a.position - b.position
-  )
+    )
+  })
   return ahead[0] ?? null
 }

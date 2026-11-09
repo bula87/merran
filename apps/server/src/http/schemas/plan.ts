@@ -530,9 +530,13 @@ const autoplanSettings = {
   hour: z.number().int().min(0).max(23).openapi({
     description: "The hour it runs, 0 to 23, in the household's time zone.",
   }),
-  meals: z.array(MealSchema).min(1, "Pick a meal to fill.").max(4).openapi({
-    description: "The meals it fills, of those the household plans.",
-  }),
+  meals: z
+    .array(MealSchema)
+    .min(1, "Pick a meal to fill.")
+    .max(MEALS.length)
+    .openapi({
+      description: "The meals it fills, of those the household plans.",
+    }),
   addToList: z.boolean().openapi({
     description: "Whether it puts what the week needs on the list too.",
   }),

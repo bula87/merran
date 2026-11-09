@@ -1120,13 +1120,15 @@
       "breakfast": "Breakfast",
       "lunch": "Lunch",
       "dinner": "Dinner",
-      "snack": "Snack"
+      "morning-snack": "Mid-morning snack",
+      "afternoon-snack": "Afternoon snack"
     },
     "mealNames": {
       "breakfast": "breakfast",
       "lunch": "lunch",
       "dinner": "dinner",
-      "snack": "snacks"
+      "morning-snack": "mid-morning snack",
+      "afternoon-snack": "afternoon snack"
     },
     "notFilled": {
       "short": "Not filled for you",
@@ -1142,7 +1144,8 @@
       "breakfast": "Add breakfast",
       "lunch": "Add lunch",
       "dinner": "Add dinner",
-      "snack": "Add a snack"
+      "morning-snack": "Add mid-morning snack",
+      "afternoon-snack": "Add afternoon snack"
     },
     "today": "Today",
     "pool": "This week, any day",
@@ -1237,19 +1240,22 @@
         "breakfast": "This morning",
         "lunch": "Lunch today",
         "dinner": "Tonight",
-        "snack": "Today"
+        "morning-snack": "Today",
+        "afternoon-snack": "Today"
       },
       "tomorrow": {
         "breakfast": "Tomorrow morning",
         "lunch": "Lunch tomorrow",
         "dinner": "Tomorrow night",
-        "snack": "Tomorrow"
+        "morning-snack": "Tomorrow",
+        "afternoon-snack": "Tomorrow"
       },
       "later": {
         "breakfast": "{{day}} morning",
         "lunch": "{{day}} lunch",
         "dinner": "{{day}} night",
-        "snack": "{{day}}"
+        "morning-snack": "{{day}}",
+        "afternoon-snack": "{{day}}"
       }
     },
     "planIt": "Plan it",

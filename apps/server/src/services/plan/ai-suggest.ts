@@ -46,9 +46,10 @@ const NO_REPEAT_DAYS = 14
 
 const MEAL_TAGS: Record<Meal, string[]> = {
   breakfast: ["breakfast", "brunch"],
+  "morning-snack": ["snack", "breakfast", "brunch", "smoothie", "fruit"],
   lunch: ["lunch", "salad", "sandwich", "soup"],
+  "afternoon-snack": ["snack", "appetizer", "dessert", "smoothie", "fruit"],
   dinner: ["dinner", "main", "main course", "main dish", "entree", "supper"],
-  snack: ["snack", "appetizer", "dessert"],
 }
 
 const PART_TAGS = [
@@ -98,9 +99,11 @@ function fitsMeal(recipe: Candidate, meal: Meal) {
   if (meal !== "dinner") return false
   const other = [
     ...MEAL_TAGS.breakfast,
-    ...MEAL_TAGS.snack,
+    ...MEAL_TAGS["morning-snack"],
+    ...MEAL_TAGS["afternoon-snack"],
     "drink",
     "cocktail",
+    "beverage",
   ]
   return !other.some((tag) => recipe.tags.includes(tag))
 }
@@ -164,7 +167,13 @@ async function candidates(em: EntityManager): Promise<Candidate[]> {
 
 const AiPick = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  meal: z.enum(["breakfast", "lunch", "dinner", "snack"]),
+  meal: z.enum([
+    "breakfast",
+    "morning-snack",
+    "lunch",
+    "afternoon-snack",
+    "dinner",
+  ]),
   recipeId: z.string().min(1),
 })
 
@@ -300,7 +309,7 @@ export async function aiSuggestMeals(
       .slice(0, 50),
   }))
 
-  const system = `Plan weekly meals. Pick one recipeId per slot from that slot's "allowed" IDs (must exist in recipes). Respect allergies, diets, dislikes, theme nights. Prefer liked foods and goal. Aim for ~${maxCaloriesPerDay} kcal/day when calories (cal) are known. Do not repeat recipes. Return only JSON matching the schema: {"suggestions":[{"date":"YYYY-MM-DD","meal":"breakfast|lunch|dinner|snack","recipeId":"..."}]}.`
+  const system = `Plan weekly meals. Pick one recipeId per slot from that slot's "allowed" IDs (must exist in recipes). Respect allergies, diets, dislikes, theme nights. Prefer liked foods and goal. Aim for ~${maxCaloriesPerDay} kcal/day when calories (cal) are known. Do not repeat recipes. Return only JSON matching the schema: {"suggestions":[{"date":"YYYY-MM-DD","meal":"breakfast|morning-snack|lunch|afternoon-snack|dinner","recipeId":"..."}]}.`
 
   const prompt = JSON.stringify({
     maxCaloriesPerDay,

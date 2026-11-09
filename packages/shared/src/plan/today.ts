@@ -26,7 +26,13 @@ export function daysAhead(today: string, weekStartsOn: number) {
 }
 
 /** Dinners first, as the meal most households plan, then lunches, then the rest. */
-const OPEN_FIRST: readonly Meal[] = ["dinner", "lunch", "breakfast", "snack"]
+const OPEN_FIRST: readonly Meal[] = [
+  "dinner",
+  "lunch",
+  "breakfast",
+  "morning-snack",
+  "afternoon-snack",
+]
 
 /**
  * The first meal from tomorrow to the end of the week with nothing

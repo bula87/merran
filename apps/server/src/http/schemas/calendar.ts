@@ -12,9 +12,10 @@ export const MealTimeSchema = z
 export const MealTimesSchema = z
   .object({
     breakfast: MealTimeSchema,
+    "morning-snack": MealTimeSchema,
     lunch: MealTimeSchema,
+    "afternoon-snack": MealTimeSchema,
     dinner: MealTimeSchema,
-    snack: MealTimeSchema,
   })
   .openapi("CalendarMealTimes")
 
@@ -36,9 +37,10 @@ export const CalendarSettingsSchema = z
       enabled: true,
       times: {
         breakfast: { start: "08:00", minutes: 30 },
-        lunch: { start: "12:00", minutes: 45 },
-        dinner: { start: "18:00", minutes: 60 },
-        snack: { start: "15:00", minutes: 30 },
+        "morning-snack": { start: "10:30", minutes: 20 },
+        lunch: { start: "12:30", minutes: 45 },
+        "afternoon-snack": { start: "15:30", minutes: 20 },
+        dinner: { start: "18:30", minutes: 60 },
       },
       publicUrlReady: true,
       links: [{ id: IDS.invite, createdAt: "2026-10-19T18:00:00.000Z" }],

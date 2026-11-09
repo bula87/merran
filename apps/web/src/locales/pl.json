@@ -1128,13 +1128,15 @@
       "breakfast": "Śniadanie",
       "lunch": "Obiad",
       "dinner": "Kolacja",
-      "snack": "Przekąska"
+      "morning-snack": "Drugie śniadanie",
+      "afternoon-snack": "Podwieczorek"
     },
     "mealNames": {
       "breakfast": "śniadanie",
       "lunch": "obiad",
       "dinner": "kolację",
-      "snack": "przekąski"
+      "morning-snack": "drugie śniadanie",
+      "afternoon-snack": "podwieczorek"
     },
     "notFilled": {
       "short": "Nie wypełniane automatycznie",
@@ -1152,7 +1154,8 @@
       "breakfast": "Dodaj śniadanie",
       "lunch": "Dodaj obiad",
       "dinner": "Dodaj kolację",
-      "snack": "Dodaj przekąskę"
+      "morning-snack": "Dodaj drugie śniadanie",
+      "afternoon-snack": "Dodaj podwieczorek"
     },
     "today": "Dzisiaj",
     "pool": "W tym tygodniu, dowolny dzień",
@@ -1263,19 +1266,22 @@
         "breakfast": "Dziś rano",
         "lunch": "Dzisiejszy obiad",
         "dinner": "Dziś wieczorem",
-        "snack": "Dzisiaj"
+        "morning-snack": "Dzisiaj",
+        "afternoon-snack": "Dzisiaj"
       },
       "tomorrow": {
         "breakfast": "Jutro rano",
         "lunch": "Jutrzejszy obiad",
         "dinner": "Jutro wieczorem",
-        "snack": "Jutro"
+        "morning-snack": "Jutro",
+        "afternoon-snack": "Jutro"
       },
       "later": {
         "breakfast": "{{day}} rano",
         "lunch": "{{day}} obiad",
         "dinner": "{{day}} wieczorem",
-        "snack": "{{day}}"
+        "morning-snack": "{{day}}",
+        "afternoon-snack": "{{day}}"
       }
     },
     "planIt": "Zaplanuj",

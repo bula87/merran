@@ -65,7 +65,13 @@ describe("the household's meals", () => {
   test("are every meal until it opts out, in a day's order", async () => {
     expect(
       (await (await kyle.get("/api/households/current")).json()).meals
-    ).toEqual(["breakfast", "lunch", "dinner", "snack"])
+    ).toEqual([
+      "breakfast",
+      "morning-snack",
+      "lunch",
+      "afternoon-snack",
+      "dinner",
+    ])
     const res = await kyle.patch("/api/households/current", {
       meals: ["dinner", "breakfast"],
     })
@@ -400,9 +406,8 @@ describe("a week", () => {
 })
 
 describe("what's next", () => {
-  test("is the next meal still planned, not the pool or a snack", async () => {
+  test("is the next meal still planned, not the pool", async () => {
     await clearAll()
-    await add({ date: today, meal: "snack", note: "Popcorn" })
     await add({ date: today, meal: "dinner", anyDay: true, note: "Tacos" })
     const tomorrow = await add({
       date: addDays(today, 1),
@@ -410,11 +415,16 @@ describe("what's next", () => {
       recipe: "tomato-soup",
     })
     const next = await (await kyle.get("/api/plan/next")).json()
-    expect(next).toMatchObject({
-      today,
-      entry: { id: tomorrow.id, recipe: { slug: "tomato-soup" } },
-    })
-    expect(["breakfast", "lunch", "dinner"]).toContain(next.mealNow)
+    expect(next.today).toBe(today)
+    expect(next.entry?.id).toBe(tomorrow.id)
+    expect(next.entry?.recipe?.slug).toBe("tomato-soup")
+    expect([
+      "breakfast",
+      "morning-snack",
+      "lunch",
+      "afternoon-snack",
+      "dinner",
+    ]).toContain(next.mealNow)
   })
 })
 
