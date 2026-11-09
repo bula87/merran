@@ -1899,9 +1899,9 @@
     },
     "analyze": {
       "title": "Analyze nutrition & calories",
-      "description": "Estimate calories and nutrition for the meal in the photo.",
+      "description": "Estimate calories and nutrition from the meal photo.",
       "action": "Analyze meal",
-      "working": "Analyzing the meal…",
+      "working": "Analyzing…",
       "result": "Estimated nutrition",
       "confidence": {
         "low": "Low confidence",
@@ -1910,7 +1910,8 @@
       },
       "perServing": "For {{serving}}",
       "notes": "Notes",
-      "disclaimer": "This is an estimate from the photo, not a nutrition label."
+      "disclaimer": "This is an estimate from the photo, not a nutrition label.",
+      "background": "Analyzing in the background (up to 6 minutes). You can close this and come back later."
     },
     "log": {
       "title": "Add to meal & nutrition log",

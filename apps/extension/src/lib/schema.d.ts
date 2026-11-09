@@ -1744,9 +1744,29 @@ export interface paths {
         put?: never;
         /**
          * Analyze a meal photo
-         * @description Estimates calories and nutrition from a photo of a meal. The result is an estimate for the serving shown. With an API key, it needs the `recipes: write` permission.
+         * @description Starts background analysis of a meal photo (up to 6 minutes). Poll the returned job to get the estimated nutrition. With an API key, it needs the `recipes: write` permission.
          */
         post: operations["analyzeMealPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutrition/photo/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get meal photo analysis
+         * @description Returns the status and result of a background meal photo analysis job. With an API key, it needs the `recipes: write` permission.
+         */
+        get: operations["getMealPhotoAnalysisJob"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3622,6 +3642,26 @@ export interface paths {
          * @description Server admins only. Asks Kroger for a token with a client ID and secret, before saving them, or with the saved ones.
          */
         post: operations["testKrogerApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/server/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Server logs
+         * @description Server admins only. Recent server log entries, including AI processing logs (model, input, output).
+         */
+        get: operations["getServerLogs"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -8356,23 +8396,16 @@ export interface components {
             sodium?: number | null;
             recipeId?: string | null;
         };
-        /**
-         * @description Estimated nutrition for the meal shown in the photo. Values are per serving as shown; unknown values are left out.
-         * @example {
-         *       "name": "Chicken salad",
-         *       "description": "Grilled chicken, mixed greens, tomatoes and dressing.",
-         *       "serving": "1 plate",
-         *       "confidence": "medium",
-         *       "calories": 420,
-         *       "protein": 34,
-         *       "carbs": 18,
-         *       "fat": 24,
-         *       "fiber": 4,
-         *       "sugar": 6,
-         *       "sodium": 680,
-         *       "notes": "Dressing amount is uncertain."
-         *     }
-         */
+        MealPhotoJob: {
+            jobId: string;
+            /** @enum {string} */
+            status: "queued" | "running" | "done" | "failed" | "cancelled";
+        };
+        MealPhotoJobStatus: components["schemas"]["MealPhotoJob"] & {
+            analysis: components["schemas"]["MealPhotoAnalysis"];
+            error: string | null;
+        };
+        /** @description The analysis, once the job is done. */
         MealPhotoAnalysis: {
             name: string | null;
             description: string | null;
@@ -8387,7 +8420,7 @@ export interface components {
             sugar?: number;
             sodium?: number;
             notes: string | null;
-        };
+        } | null;
         /**
          * @example {
          *       "items": [
@@ -11943,6 +11976,16 @@ export interface components {
         KrogerAppTest: {
             clientId?: string;
             clientSecret?: string;
+        };
+        ServerLogs: {
+            entries: components["schemas"]["ServerLogEntry"][];
+        };
+        ServerLogEntry: {
+            time: number;
+            level: number;
+            msg: string;
+        } & {
+            [key: string]: unknown;
         };
         /**
          * @example {
@@ -18357,13 +18400,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description The estimated nutrition. */
-            200: {
+            /** @description The analysis job. */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MealPhotoAnalysis"];
+                    "application/json": components["schemas"]["MealPhotoJob"];
                 };
             };
             /** @description No photo, or the photo couldn't be read. */
@@ -18402,8 +18445,30 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description No meal found, or nutrition couldn't be estimated. */
-            422: {
+        };
+    };
+    getMealPhotoAnalysisJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The analysis job status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MealPhotoJobStatus"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18411,8 +18476,17 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description The AI provider failed. */
-            502: {
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such analysis job. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24390,6 +24464,47 @@ export interface operations {
             };
             /** @description Kroger didn't answer. */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getServerLogs: {
+        parameters: {
+            query?: {
+                limit?: number;
+                level?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent log entries. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerLogs"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

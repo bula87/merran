@@ -2027,9 +2027,9 @@
     },
     "analyze": {
       "title": "Analizuj wartości odżywcze i kalorie",
-      "description": "Oszacuj kalorie i wartości odżywcze posiłku ze zdjęcia.",
+      "description": "Oszacuj kalorie i wartości odżywcze ze zdjęcia posiłku.",
       "action": "Analizuj posiłek",
-      "working": "Analizowanie posiłku…",
+      "working": "Analizowanie…",
       "result": "Szacowane wartości odżywcze",
       "confidence": {
         "low": "Niska pewność",
@@ -2038,7 +2038,8 @@
       },
       "perServing": "Dla: {{serving}}",
       "notes": "Uwagi",
-      "disclaimer": "To szacunek na podstawie zdjęcia, nie etykieta wartości odżywczych."
+      "disclaimer": "To szacunek na podstawie zdjęcia, nie etykieta wartości odżywczych.",
+      "background": "Analiza działa w tle (do 6 minut). Możesz zamknąć to okno i wrócić później."
     },
     "log": {
       "title": "Dodaj do dziennika posiłków i odżywiania",

@@ -126,6 +126,8 @@ export async function analyzeMealPhoto(
     householdId: string
     userId: string | null
     photo: Buffer
+    /** Aborted to stop the AI call, e.g. on a timeout or job cancel. */
+    abortSignal?: AbortSignal
   }
 ): Promise<MealPhotoAnalysis> {
   if (options.photo.length === 0) {
@@ -165,6 +167,7 @@ export async function analyzeMealPhoto(
           messages: [{ role: "user", content }],
           output: Output.object({ schema: MealPhoto, name: "meal_photo" }),
           maxOutputTokens: 1600,
+          ...(options.abortSignal ? { abortSignal: options.abortSignal } : {}),
         })
     )
     return toAnalysis(output)

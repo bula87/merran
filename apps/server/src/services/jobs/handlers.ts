@@ -2,6 +2,7 @@ import { sendTelemetryJob } from "../../modules/telemetry/send.ts"
 import { invitationEmailJob } from "../../modules/email/invitations.ts"
 import { passwordResetEmailJob } from "../../modules/email/password-resets.ts"
 import { checkUpdatesJob } from "../../modules/updates/check.ts"
+import { mealPhotoAnalysisJob } from "../nutrition/photo-job.ts"
 import { aiPhotoRunJob } from "../recipes/photos/runs.ts"
 import { appImportJob } from "../recipes/import/apps/job.ts"
 import { purgeDeletedJob } from "../recipes/deleted.ts"
@@ -34,6 +35,7 @@ export const JOB_HANDLERS: readonly JobHandler[] = [
   autoplanJob,
   tidyRunJob,
   nutritionRunJob,
+  mealPhotoAnalysisJob,
   noteEditJob,
   discoverJob,
   readSitesJob,

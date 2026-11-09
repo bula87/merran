@@ -7,7 +7,7 @@ import {
   NoteAddIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import * as React from "react"
 import { useTranslation } from "react-i18next"
@@ -44,6 +44,24 @@ export const Route = createFileRoute("/_app/photo")({
 })
 
 const MAX_SIDE = 2000
+const PHOTO_JOB_KEY = "merran:meal-photo-job"
+
+function readStoredJobId() {
+  try {
+    return localStorage.getItem(PHOTO_JOB_KEY)
+  } catch {
+    return null
+  }
+}
+
+function storeJobId(jobId: string | null) {
+  try {
+    if (jobId) localStorage.setItem(PHOTO_JOB_KEY, jobId)
+    else localStorage.removeItem(PHOTO_JOB_KEY)
+  } catch {
+    // Ignore storage failures.
+  }
+}
 
 type Analysis = {
   name: string | null
@@ -74,7 +92,10 @@ function PhotoPage() {
   const [preview, setPreview] = React.useState<string | null>(null)
   const [recipeBusy, setRecipeBusy] = React.useState(false)
   const [recipeError, setRecipeError] = React.useState<string | null>(null)
-  const [analyzeBusy, setAnalyzeBusy] = React.useState(false)
+  const [jobId, setJobId] = React.useState<string | null>(() =>
+    readStoredJobId()
+  )
+  const [submitBusy, setSubmitBusy] = React.useState(false)
   const [analyzeError, setAnalyzeError] = React.useState<string | null>(null)
   const [analysis, setAnalysis] = React.useState<Analysis | null>(null)
   const [logOpen, setLogOpen] = React.useState(false)
@@ -115,12 +136,64 @@ function PhotoPage() {
     }
   }, [preview])
 
+  function clearJob() {
+    storeJobId(null)
+    setJobId(null)
+  }
+
   function clearResult() {
     setRecipeError(null)
     setAnalyzeError(null)
     setAnalysis(null)
     setLogOpen(false)
+    clearJob()
   }
+
+  const jobQuery = useQuery({
+    queryKey: ["meal-photo-analysis", jobId],
+    enabled: !!jobId,
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/nutrition/photo/{jobId}", {
+          params: { path: { jobId: jobId! } },
+        })
+      ),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      return status === "queued" || status === "running" ? 2000 : false
+    },
+    retry: false,
+  })
+
+  React.useEffect(() => {
+    const job = jobQuery.data
+    if (!job || !jobId) return
+    if (job.status === "done" && job.analysis) {
+      setAnalysis(job.analysis as Analysis)
+      setAnalyzeError(null)
+      setLogOpen(true)
+      clearJob()
+    } else if (job.status === "failed" || job.status === "cancelled") {
+      setAnalyzeError(job.error || t("photo.error"))
+      clearJob()
+    }
+  }, [jobQuery.data, jobId, t])
+
+  React.useEffect(() => {
+    if (!jobQuery.error || !jobId) return
+    setAnalyzeError(
+      jobQuery.error instanceof ApiError
+        ? jobQuery.error.message
+        : t("photo.error")
+    )
+    clearJob()
+  }, [jobQuery.error, jobId, t])
+
+  const analyzeBusy =
+    submitBusy ||
+    jobQuery.data?.status === "queued" ||
+    jobQuery.data?.status === "running" ||
+    (!!jobId && jobQuery.isPending)
 
   function pick(next: File | undefined) {
     if (!next) return
@@ -172,8 +245,12 @@ function PhotoPage() {
       setAnalyzeError(t("photo.noPhoto"))
       return
     }
-    setAnalyzeBusy(true)
+    setSubmitBusy(true)
     setAnalyzeError(null)
+    setAnalysis(null)
+    setLogOpen(false)
+    storeJobId(null)
+    setJobId(null)
     try {
       const blob = await shrinkPhoto(file, MAX_SIDE)
       const form = new FormData()
@@ -181,22 +258,16 @@ function PhotoPage() {
       const data = await unwrap(
         api.POST("/api/nutrition/photo", {
           body: form as unknown as { photo?: string },
-          signal: AbortSignal.timeout(300_000),
-        } as never)
+        })
       )
-      setAnalysis(data as Analysis)
-      setLogOpen(true)
+      const nextJobId = (data as { jobId?: string }).jobId
+      if (!nextJobId) throw new Error(t("photo.error"))
+      storeJobId(nextJobId)
+      setJobId(nextJobId)
     } catch (err) {
-      const timeout = err instanceof DOMException && err.name === "TimeoutError"
-      setAnalyzeError(
-        timeout
-          ? t("photo.timeout")
-          : err instanceof ApiError
-            ? err.message
-            : t("photo.error")
-      )
+      setAnalyzeError(err instanceof ApiError ? err.message : t("photo.error"))
     } finally {
-      setAnalyzeBusy(false)
+      setSubmitBusy(false)
     }
   }
 
@@ -355,6 +426,12 @@ function PhotoPage() {
             <CardContent className="space-y-3">
               {nutritionAi.why && (
                 <NeedsAi task="nutrition" why={nutritionAi.why} />
+              )}
+              {(jobQuery.data?.status === "queued" ||
+                jobQuery.data?.status === "running") && (
+                <p className="text-sm text-muted-foreground">
+                  {t("photo.analyze.background")}
+                </p>
               )}
               {analyzeError && <FieldError>{analyzeError}</FieldError>}
               {analysis && !logOpen && (
