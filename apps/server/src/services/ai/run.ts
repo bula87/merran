@@ -230,6 +230,8 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
      * models Merran knows; an address's are tried as they are.
      */
     needs?: readonly ModelAbility[]
+    /** Use this model instead of the task's resolved model, when set. */
+    modelRef?: string
   },
   call: (model: LanguageModel, extras: AiExtras) => Promise<T>
 ): Promise<T> {
@@ -242,7 +244,8 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
       em,
       options.householdId,
       options.task,
-      options.estimate
+      options.estimate,
+      options.modelRef
     )
     if (!resolution.ok) {
       if (outOfCredit.length > 0) throw outOfCreditError(outOfCredit[0]!)

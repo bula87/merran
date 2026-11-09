@@ -6,8 +6,9 @@ import sharp from "sharp"
 import { z } from "zod"
 import { AppError } from "../../../core/errors.ts"
 import type { RecipeInput } from "../../../http/schemas/recipes.ts"
+import { getPolicy } from "../../ai/policy.ts"
 import { aiUnavailable, useAi, type AiDeps } from "../../ai/run.ts"
-import { resolveTask } from "../../ai/status.ts"
+import { householdAi, resolveTask } from "../../ai/status.ts"
 import { listTags } from "../tags.ts"
 import { shareImages, type RecipeData } from "./recipe-data.ts"
 
@@ -169,8 +170,8 @@ export function toRecipeInput(
 }
 
 /**
- * Reads a recipe with the household's import model. Photos need a model
- * that can read them.
+ * Reads a recipe with the household's import model. Photos/PDFs try the
+ * image processing model as a fallback when the import model fails.
  */
 export async function readRecipe(
   deps: AiDeps,
@@ -181,6 +182,7 @@ export async function readRecipe(
     content: Exclude<UserContent, string>
     source: Source
     sourceUrl?: string | null
+    modelRef?: string
   }
 ): Promise<RecipeInput> {
   const files = options.content.flatMap((part) =>
@@ -189,29 +191,46 @@ export async function readRecipe(
   const photos = files.some((type) => type.startsWith("image/"))
   const pdfs = files.includes("application/pdf")
   const system = await systemFor(em)
-  const { output } = await useAi(
-    deps,
-    em,
-    {
-      householdId: options.householdId,
-      userId: options.userId,
-      task: "import",
-      needs: [
-        "structured",
-        ...(photos ? (["images"] as const) : []),
-        ...(pdfs ? (["pdfs"] as const) : []),
-      ],
-    },
-    (model) =>
-      generateText({
-        model,
-        system,
-        messages: [{ role: "user", content: options.content }],
-        output: Output.object({ schema: ReadRecipe, name: "recipe" }),
-        maxOutputTokens: 8000,
-      })
-  )
-  return toRecipeInput(output, options.source, options.sourceUrl ?? null)
+
+  const run = async (modelRef?: string) => {
+    const { output } = await useAi(
+      deps,
+      em,
+      {
+        householdId: options.householdId,
+        userId: options.userId,
+        task: "import",
+        needs: [
+          "structured",
+          ...(photos ? (["images"] as const) : []),
+          ...(pdfs ? (["pdfs"] as const) : []),
+        ],
+        ...(modelRef ? { modelRef } : {}),
+      },
+      (model) =>
+        generateText({
+          model,
+          system,
+          messages: [{ role: "user", content: options.content }],
+          output: Output.object({ schema: ReadRecipe, name: "recipe" }),
+          maxOutputTokens: 8000,
+        })
+    )
+    return toRecipeInput(output, options.source, options.sourceUrl ?? null)
+  }
+
+  try {
+    return await run(options.modelRef)
+  } catch (error) {
+    if (options.modelRef || options.source !== "photos") throw error
+    const [ai, policy] = await Promise.all([
+      householdAi(em, options.householdId),
+      getPolicy(deps.settings),
+    ])
+    const imageRef = ai.image ?? policy.image
+    if (!imageRef) throw error
+    return await run(imageRef)
+  }
 }
 
 /** Text to read: the pasted text, as it is. */

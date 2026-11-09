@@ -112,21 +112,25 @@ export async function canTranscribe(
   })
 }
 
-/** Whose key pays for one of a household's AI tasks, or why nobody's can. */
+/** Whose key pays for one of a household's AI task, or why nobody's can. */
 export async function resolveTask(
   deps: Deps,
   em: EntityManager,
   householdId: string,
   task: AiTask,
-  estimate = 0
+  estimate = 0,
+  modelRef?: string
 ): Promise<Resolution> {
   const context = await contextFor(deps, em, householdId)
+  const ai = modelRef
+    ? { ...context.ai, tasks: { ...context.ai.tasks, [task]: modelRef } }
+    : context.ai
   return resolveAi({
     task,
     householdId,
     household: {
       keys: context.own,
-      ai: context.ai,
+      ai,
       spent: context.spent.household,
     },
     server: {
