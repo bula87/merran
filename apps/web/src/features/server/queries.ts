@@ -3,6 +3,10 @@ import { queryOptions, useQueryClient } from "@tanstack/react-query"
 import { capabilitiesQuery } from "@/features/capabilities/queries"
 import { api, unwrap, type Schemas } from "@/lib/api/client"
 
+export async function runRecipeTranslations() {
+  return unwrap(api.POST("/api/settings/server/recipe-translations/run"))
+}
+
 export type ServerSettings = Schemas["ServerSettings"]
 export type TelemetryReport = Schemas["TelemetryReport"]
 export type TelemetryStatus = Schemas["TelemetryStatus"]

@@ -1,9 +1,10 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import * as React from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardAction,
@@ -25,7 +26,11 @@ import { Switch } from "@/components/ui/switch"
 import { LockedNote } from "@/features/settings/setting-fields"
 import { ApiError } from "@/lib/api/client"
 
-import { serverSettingsQuery, useSaveServerSettings } from "./queries"
+import {
+  runRecipeTranslations,
+  serverSettingsQuery,
+  useSaveServerSettings,
+} from "./queries"
 
 const ENABLED = "recipeTranslations.enabled"
 const HOUR = "recipeTranslations.hour"
@@ -35,7 +40,9 @@ export function RecipeTranslationsCard() {
   const { t } = useTranslation()
   const { data } = useSuspenseQuery(serverSettingsQuery)
   const save = useSaveServerSettings()
+  const queryClient = useQueryClient()
   const [saving, setSaving] = React.useState<string | null>(null)
+  const [triggering, setTriggering] = React.useState(false)
   const id = React.useId()
   const enabled = data.settings.find((s) => s.key === ENABLED)
   const hour = data.settings.find((s) => s.key === HOUR)
@@ -82,6 +89,20 @@ export function RecipeTranslationsCard() {
       toast.error(error.message)
     } finally {
       setSaving(null)
+    }
+  }
+
+  async function triggerNow() {
+    setTriggering(true)
+    try {
+      await runRecipeTranslations()
+      await queryClient.invalidateQueries({ queryKey: ["server", "jobs"] })
+      toast.success(t("settings.server.recipeTranslations.triggered"))
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error
+      toast.error(error.message)
+    } finally {
+      setTriggering(false)
     }
   }
 
@@ -191,6 +212,17 @@ export function RecipeTranslationsCard() {
               </FieldDescription>
             </Field>
           )}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void triggerNow()}
+              disabled={triggering || saving !== null}
+            >
+              {triggering && <Spinner />}
+              {t("settings.server.recipeTranslations.triggerNow")}
+            </Button>
+          </div>
         </FieldGroup>
       </CardContent>
     </Card>

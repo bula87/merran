@@ -32529,6 +32529,64 @@
         }
       }
     },
+    "/api/settings/server/recipe-translations/run": {
+      "post": {
+        "operationId": "runRecipeTranslations",
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Run recipe translations now",
+        "description": "Server admins only. Enqueues a batch translation run that translates recipes missing translations, up to the configured maximum per run.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A translation batch was queued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "queued": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "queued"
+                  ],
+                  "example": {
+                    "queued": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings/server/updates": {
       "get": {
         "operationId": "getUpdates",

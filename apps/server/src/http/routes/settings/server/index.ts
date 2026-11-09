@@ -8,6 +8,7 @@ import jobsRoutes from "./jobs/index.ts"
 import krogerRoutes from "./kroger/index.ts"
 import nutritionRoutes from "./nutrition/index.ts"
 import patch from "./patch.ts"
+import recipeTranslationsRoutes from "./recipe-translations/index.ts"
 import updatesRoutes from "./updates/index.ts"
 import voiceRoutes from "./voice/index.ts"
 
@@ -20,6 +21,7 @@ export default (router: Router, deps: AppDeps) => {
   jobsRoutes(router, deps)
   krogerRoutes(router, deps)
   nutritionRoutes(router, deps)
+  recipeTranslationsRoutes(router, deps)
   updatesRoutes(router, deps)
   voiceRoutes(router, deps)
 }

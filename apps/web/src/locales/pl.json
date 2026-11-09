@@ -4048,6 +4048,8 @@
       "hourHint": "Godzina dnia w czasie serwera (0–23).",
       "maxPerRun": "Maks. przepisów na uruchomienie",
       "maxPerRunHint": "Ile przepisów tłumaczyć przy każdym zaplanowanym uruchomieniu. Mniejsze partie rozkładają obciążenie AI; pozostałe zostaną przetłumaczone w kolejnych uruchomieniach.",
+      "triggerNow": "Uruchom teraz",
+      "triggered": "Partia tłumaczeń dodana do kolejki.",
       "saved": "Zapisano."
     },
     "voice": {
