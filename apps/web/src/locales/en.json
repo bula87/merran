@@ -1923,7 +1923,8 @@
       "reject": "Not now"
     },
     "noPhoto": "Choose or take a photo first.",
-    "error": "Something went wrong. Try again."
+    "error": "Something went wrong. Try again.",
+    "timeout": "Analyzing took too long. Try again, or check the server logs."
   },
   "mealsLog": {
     "title": "Meals log",

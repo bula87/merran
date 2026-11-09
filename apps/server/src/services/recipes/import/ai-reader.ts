@@ -236,7 +236,18 @@ export async function readRecipe(
       try {
         return await run(imageRef)
       } catch (error) {
-        if (error instanceof AppError) throw error
+        // Fallback to the task/big model when the image model fails.
+        deps.logger?.warn(
+          {
+            ai: {
+              event: "fallback",
+              task: "import",
+              fromModelRef: imageRef,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          },
+          "AI image model failed, falling back"
+        )
       }
     }
   }

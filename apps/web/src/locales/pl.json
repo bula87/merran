@@ -2051,7 +2051,8 @@
       "reject": "Nie teraz"
     },
     "noPhoto": "Najpierw wybierz lub zrób zdjęcie.",
-    "error": "Coś poszło nie tak. Spróbuj ponownie."
+    "error": "Coś poszło nie tak. Spróbuj ponownie.",
+    "timeout": "Analiza trwała zbyt długo. Spróbuj ponownie lub sprawdź logi serwera."
   },
   "mealsLog": {
     "title": "Dziennik posiłków",

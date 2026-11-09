@@ -181,12 +181,20 @@ function PhotoPage() {
       const data = await unwrap(
         api.POST("/api/nutrition/photo", {
           body: form as unknown as { photo?: string },
-        })
+          signal: AbortSignal.timeout(300_000),
+        } as never)
       )
       setAnalysis(data as Analysis)
       setLogOpen(true)
     } catch (err) {
-      setAnalyzeError(err instanceof ApiError ? err.message : t("photo.error"))
+      const timeout = err instanceof DOMException && err.name === "TimeoutError"
+      setAnalyzeError(
+        timeout
+          ? t("photo.timeout")
+          : err instanceof ApiError
+            ? err.message
+            : t("photo.error")
+      )
     } finally {
       setAnalyzeBusy(false)
     }
