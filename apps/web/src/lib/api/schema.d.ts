@@ -9656,7 +9656,7 @@ export interface components {
             sections: components["schemas"]["ProposalSection"][];
             /** @description The cooking note it came from, for one made from a note. */
             note: string | null;
-            /** @description What an assistant's suggestion adds, by kind: `recipe` (a recipe, as the editor writes one), `meals` (meals for the plan), `items` (lines for the list), tastes to remember (`avoid`, `diets`, `weeknightMinutes`), a recipe page to import (`url`, `name`, `site`, `photo`, `minutes`, `why`), or a stand-in for an ingredient (`ingredientId`, `insteadOf`, `lines`, `note`, `steps`), which applying saves to the recipe. Null for changes to a recipe's sections. */
+            /** @description Extra suggestion data. For assistant suggestions: by kind `recipe` (a recipe, as the editor writes one), `meals`, `items`, tastes (`avoid`, `diets`, `weeknightMinutes`), import (`url`, `name`, `site`, `photo`, `minutes`, `why`), or swap (`ingredientId`, `insteadOf`, `lines`, `note`, `steps`). For tidy suggestions it may include `duplicates` (possible duplicate recipes to review). Otherwise null. */
             payload: {
                 [key: string]: unknown;
             } | null;

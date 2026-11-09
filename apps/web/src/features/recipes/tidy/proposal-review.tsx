@@ -85,6 +85,7 @@ export function ProposalReview({
         </blockquote>
       )}
       <p className="text-sm text-muted-foreground">{proposal.summary}</p>
+      <DuplicateRecipes payload={proposal.payload} />
       <ul className="grid gap-3">
         {proposal.sections.map((section) => {
           const id = `${proposal.id}-${section}`
@@ -130,15 +131,17 @@ export function ProposalReview({
           {busy === "dismiss" && <Spinner data-icon="inline-start" />}
           {t("recipes.tidy.dismiss")}
         </Button>
-        <Button
-          disabled={busy !== null || picked.size === 0}
-          onClick={() => void finish("apply")}
-        >
-          {busy === "apply" && <Spinner data-icon="inline-start" />}
-          {picked.size === proposal.sections.length
-            ? t("recipes.tidy.applyAll")
-            : t("recipes.tidy.apply", { count: picked.size })}
-        </Button>
+        {proposal.sections.length > 0 && (
+          <Button
+            disabled={busy !== null || picked.size === 0}
+            onClick={() => void finish("apply")}
+          >
+            {busy === "apply" && <Spinner data-icon="inline-start" />}
+            {picked.size === proposal.sections.length
+              ? t("recipes.tidy.applyAll")
+              : t("recipes.tidy.apply", { count: picked.size })}
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -322,6 +325,54 @@ function DetailsChange({
         </li>
       ))}
     </ul>
+  )
+}
+
+function DuplicateRecipes({
+  payload,
+}: {
+  payload: Record<string, unknown> | null | undefined
+}) {
+  const { t } = useTranslation()
+  const duplicates = Array.isArray(payload?.duplicates)
+    ? (payload.duplicates as Array<{
+        id?: string
+        slug?: string
+        name?: string
+        reason?: string
+      }>)
+    : []
+  if (duplicates.length === 0) return null
+  return (
+    <div className="rounded-2xl border bg-card p-3 sm:p-4">
+      <p className="mb-2 text-sm font-medium">
+        {t("recipes.tidy.possibleDuplicates")}
+      </p>
+      <ul className="grid gap-1 text-sm">
+        {duplicates.map((item, index) => (
+          <li key={item.id ?? `${item.slug ?? "duplicate"}-${index}`}>
+            {item.slug ? (
+              <a
+                className="text-primary underline"
+                href={`/recipes/${item.slug}`}
+              >
+                {item.name ?? item.slug}
+              </a>
+            ) : (
+              <span>{item.name ?? item.id}</span>
+            )}
+            {item.reason ? (
+              <span className="text-muted-foreground">
+                {" "}
+                (
+                {t(`recipes.tidy.duplicateReasons.${item.reason}`, item.reason)}
+                )
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

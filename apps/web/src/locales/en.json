@@ -1719,6 +1719,11 @@
       "now": "Now",
       "tidied": "Tidied",
       "notMarked": "Not marked yet.",
+      "possibleDuplicates": "Possible duplicate recipes",
+      "duplicateReasons": {
+        "name": "similar name",
+        "source": "same source"
+      },
       "marks": {
         "needed": "Can't do without",
         "swappable": "Something else could stand in",

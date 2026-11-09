@@ -23,6 +23,7 @@ import type { RecipeInput } from "../../../http/schemas/recipes.ts"
 import { useAi, type AiDeps } from "../../ai/run.ts"
 import { findRecipe, marksFrom } from "../recipes.ts"
 import { inHouseholdTransaction } from "../../../database/transactions.ts"
+import { slugify } from "../slugs.ts"
 import { listTags, tagKey } from "../tags.ts"
 
 // Tidy up: the AI tidies a recipe, a section at a time, and what it
@@ -292,11 +293,69 @@ export function linesToName(recipe: { input: RecipeInput; foods: FoodLine[] }) {
 /** A line's food, for matching marks to lines written differently. */
 const parseFood = (line: string) => parseIngredient(line).food
 
+type DuplicateRecipe = {
+  id: string
+  slug: string
+  name: string
+  reason: "name" | "source"
+}
+
 /**
- * Has AI tidy a recipe, and keeps what it would change as a proposal in
- * the Review queue, in place of any earlier one for the recipe. Null when
- * there's nothing to change. Either way, the recipe is noted as tidied, so
- * a library run passes it by.
+ * Other recipes in the household that may be the same recipe: same normalized
+ * name/address form, or the same source page.
+ */
+async function findPossibleDuplicates(
+  em: EntityManager,
+  recipe: Recipe
+): Promise<DuplicateRecipe[]> {
+  const found = new Map<string, DuplicateRecipe>()
+  const base = slugify(recipe.name)
+  const household = recipe.household.id
+
+  const byName = await em.find(
+    Recipe,
+    {
+      household,
+      $or: [{ slug: base }, { slug: { $like: `${base}-%` } }],
+      id: { $ne: recipe.id },
+    },
+    { fields: ["id", "slug", "name"], limit: 5 }
+  )
+  for (const other of byName) {
+    found.set(other.id, {
+      id: other.id,
+      slug: other.slug,
+      name: other.name,
+      reason: "name",
+    })
+  }
+
+  const sourceUrl = recipe.sourceUrl?.trim()
+  if (sourceUrl) {
+    const bySource = await em.find(
+      Recipe,
+      { household, sourceUrl, id: { $ne: recipe.id } },
+      { fields: ["id", "slug", "name"], limit: 5 }
+    )
+    for (const other of bySource) {
+      found.set(other.id, {
+        id: other.id,
+        slug: other.slug,
+        name: other.name,
+        reason: "source",
+      })
+    }
+  }
+
+  return [...found.values()].slice(0, 5)
+}
+
+/**
+ * Has AI tidy a recipe, checks for possible duplicate recipes, and keeps
+ * findings as a proposal in the Review queue in place of any earlier tidy
+ * proposal for the recipe. Returns null only when there are no recipe
+ * changes and no duplicate findings. Either way, the recipe is noted as
+ * tidied, so a library run passes it by.
  */
 export async function proposeTidy(
   deps: AiDeps,
@@ -349,6 +408,15 @@ export async function proposeTidy(
     householdTags
   )
   const changed = Object.keys(after).length > 0
+  const duplicates = await findPossibleDuplicates(em, recipe)
+  const hasDuplicates = duplicates.length > 0
+  const baseSummary = output.summary.trim().slice(0, 300) || "Tidied up."
+  const summary = hasDuplicates
+    ? `${baseSummary} Possible duplicate${duplicates.length === 1 ? "" : "s"}: ${duplicates
+        .map((item) => item.name)
+        .join(", ")}.`.slice(0, 300)
+    : baseSummary
+  const payload = hasDuplicates ? { duplicates } : null
 
   const id = await inHouseholdTransaction(
     em,
@@ -356,7 +424,7 @@ export async function proposeTidy(
     async (tx) => {
       const row = await tx.findOneOrFail(Recipe, { id: recipe.id })
       row.tidiedAt = new Date()
-      if (!changed) {
+      if (!changed && !hasDuplicates) {
         await tx.flush()
         return null
       }
@@ -374,9 +442,10 @@ export async function proposeTidy(
         kind: "tidy",
         recipe: recipe.id,
         status: "pending",
-        summary: output.summary.trim().slice(0, 300) || "Tidied up.",
-        before,
-        after,
+        summary,
+        before: changed ? before : {},
+        after: changed ? after : {},
+        payload,
         job: options.jobId ?? null,
         createdBy: options.userId,
       })

@@ -1815,6 +1815,11 @@
       "now": "Teraz",
       "tidied": "Uporządkowane",
       "notMarked": "Jeszcze nie oznaczono.",
+      "possibleDuplicates": "Możliwe zduplikowane przepisy",
+      "duplicateReasons": {
+        "name": "podobna nazwa",
+        "source": "to samo źródło"
+      },
       "marks": {
         "needed": "Niezbędne",
         "swappable": "Można czymś zastąpić",
