@@ -28,6 +28,13 @@ export default (router: Router, _deps: AppDeps) => {
   router.openapi(route, async (c) => {
     const { em, householdId } = inHousehold(c)
     const query = c.req.valid("query")
-    return c.json(await listMealLogs(em, householdId, query), 200)
+    return c.json(
+      await listMealLogs(em, householdId, {
+        limit: query.limit,
+        offset: query.offset,
+        status: query.status,
+      }),
+      200
+    )
   })
 }

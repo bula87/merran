@@ -2066,7 +2066,50 @@
     "fromRecipe": "Z przepisu",
     "addFromRecipe": "Dodaj do dziennika",
     "addedFromRecipe": "Dodano do dziennika posiłków.",
-    "addFromRecipeHint": "Zapisz ten posiłek z jego wartościami odżywczymi."
+    "addFromRecipeHint": "Zapisz ten posiłek z jego wartościami odżywczymi.",
+    "logged": "Zapisane posiłki",
+    "fromText": "Tekst",
+    "approved": "Dodano do dziennika posiłków",
+    "declined": "Usunięto wpis posiłku",
+    "add": {
+      "action": "Dodaj posiłek",
+      "title": "Dodaj wpis posiłku",
+      "description": "Prześlij zdjęcie lub opisz posiłek. Merran oszacuje kalorie i wartości odżywcze do sprawdzenia.",
+      "photoTab": "Zdjęcie",
+      "textTab": "Tekst",
+      "choosePhoto": "Wybierz zdjęcie posiłku",
+      "detailsOptional": "Dodatkowe szczegóły (opcjonalnie)",
+      "detailsPlaceholder": "Coś pomocnego, np. wielkość porcji lub składniki",
+      "describeLabel": "Opisz swój posiłek",
+      "describePlaceholder": "Na przykład: miska kurczaka curry z ryżem i chlebem naan",
+      "describeRequired": "Opisz posiłek.",
+      "photoRequired": "Wybierz zdjęcie.",
+      "submit": "Analizuj",
+      "submitting": "Wysyłanie…",
+      "submitted": "Posiłek dodany do sprawdzenia"
+    },
+    "review": {
+      "title": "Do sprawdzenia",
+      "processing": "Analizowanie",
+      "ready": "Gotowe do sprawdzenia",
+      "failed": "Analiza nie powiodła się",
+      "approve": "Zatwierdź",
+      "editApprove": "Edytuj i zatwierdź",
+      "editDescription": "Sprawdź oszacowanie, w razie potrzeby wprowadź zmiany, a następnie dodaj do dziennika posiłków.",
+      "decline": "Odrzuć"
+    },
+    "fields": {
+      "name": "Nazwa",
+      "serving": "Porcja",
+      "calories": "Kalorie (kcal)",
+      "protein": "Białko (g)",
+      "carbs": "Węglowodany (g)",
+      "fat": "Tłuszcz (g)",
+      "fiber": "Błonnik (g)",
+      "sugar": "Cukry (g)",
+      "sodium": "Sód (mg)",
+      "notes": "Notatki"
+    }
   },
   "cook": {
     "exit": "Wyjdź",

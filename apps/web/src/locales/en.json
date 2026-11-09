@@ -1938,7 +1938,50 @@
     "fromRecipe": "From recipe",
     "addFromRecipe": "Add to meal log",
     "addedFromRecipe": "Added to your meal log.",
-    "addFromRecipeHint": "Log this meal with its nutrition."
+    "addFromRecipeHint": "Log this meal with its nutrition.",
+    "logged": "Logged meals",
+    "fromText": "Text",
+    "approved": "Added to meal log",
+    "declined": "Meal log removed",
+    "add": {
+      "action": "Add meal",
+      "title": "Add meal log",
+      "description": "Upload a photo or describe your meal. Merran will estimate calories and nutrition for you to review.",
+      "photoTab": "Photo",
+      "textTab": "Text",
+      "choosePhoto": "Choose a meal photo",
+      "detailsOptional": "Extra details (optional)",
+      "detailsPlaceholder": "Anything helpful, like portion size or ingredients",
+      "describeLabel": "Describe your meal",
+      "describePlaceholder": "For example: a bowl of chicken curry with rice and naan",
+      "describeRequired": "Describe the meal.",
+      "photoRequired": "Choose a photo.",
+      "submit": "Analyze",
+      "submitting": "Submitting…",
+      "submitted": "Meal added for review"
+    },
+    "review": {
+      "title": "To review",
+      "processing": "Analyzing",
+      "ready": "Ready to review",
+      "failed": "Analysis failed",
+      "approve": "Approve",
+      "editApprove": "Edit & approve",
+      "editDescription": "Check the estimate, make changes if needed, then add it to your meal log.",
+      "decline": "Decline"
+    },
+    "fields": {
+      "name": "Name",
+      "serving": "Serving",
+      "calories": "Calories (kcal)",
+      "protein": "Protein (g)",
+      "carbs": "Carbs (g)",
+      "fat": "Fat (g)",
+      "fiber": "Fiber (g)",
+      "sugar": "Sugar (g)",
+      "sodium": "Sodium (mg)",
+      "notes": "Notes"
+    }
   },
   "cook": {
     "exit": "Exit",

@@ -4746,6 +4746,23 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
+        "error": {
+          "name": "error",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
         "fat": {
           "name": "fat",
           "type": "double",
@@ -4804,6 +4821,40 @@
           "autoincrement": false,
           "primary": true,
           "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "input_photo_key": {
+          "name": "input_photo_key",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "input_text": {
+          "name": "input_text",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": null,
@@ -4966,8 +5017,31 @@
           "collation": null,
           "enumItems": [
             "photo",
+            "text",
             "recipe",
             "manual"
+          ],
+          "mappedType": "enum"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'logged'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "processing",
+            "ready",
+            "failed",
+            "logged"
           ],
           "mappedType": "enum"
         },
@@ -5040,6 +5114,16 @@
         },
         {
           "columnNames": [
+            "status"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "meal_logs_status_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "user_id"
           ],
           "composite": false,
@@ -5068,9 +5152,15 @@
         },
         {
           "name": "meal_logs_source_check",
-          "expression": "`source` in ('photo', 'recipe', 'manual')",
-          "definition": "check (`source` in ('photo', 'recipe', 'manual'))",
+          "expression": "`source` in ('photo', 'text', 'recipe', 'manual')",
+          "definition": "check (`source` in ('photo', 'text', 'recipe', 'manual'))",
           "columnName": "source"
+        },
+        {
+          "name": "meal_logs_status_check",
+          "expression": "`status` in ('processing', 'ready', 'failed', 'logged')",
+          "definition": "check (`status` in ('processing', 'ready', 'failed', 'logged'))",
+          "columnName": "status"
         }
       ],
       "triggers": [],

@@ -7037,6 +7037,9 @@
           "id": {
             "type": "string"
           },
+          "status": {
+            "$ref": "#/components/schemas/MealLogStatus"
+          },
           "name": {
             "type": "string"
           },
@@ -7063,6 +7066,21 @@
             "$ref": "#/components/schemas/MealLogConfidence"
           },
           "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inputText": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasPhoto": {
+            "type": "boolean"
+          },
+          "error": {
             "type": [
               "string",
               "null"
@@ -7139,6 +7157,7 @@
         },
         "required": [
           "id",
+          "status",
           "name",
           "serving",
           "servings",
@@ -7146,6 +7165,9 @@
           "source",
           "confidence",
           "notes",
+          "inputText",
+          "hasPhoto",
+          "error",
           "calories",
           "protein",
           "carbs",
@@ -7155,31 +7177,22 @@
           "sodium",
           "recipe",
           "createdAt"
-        ],
-        "example": {
-          "id": "meal-log-1",
-          "name": "Chicken salad",
-          "serving": "1 plate",
-          "servings": 1,
-          "loggedAt": "2026-11-09T12:30:00.000Z",
-          "source": "photo",
-          "confidence": "medium",
-          "notes": "Dressing amount uncertain.",
-          "calories": 420,
-          "protein": 34,
-          "carbs": 18,
-          "fat": 24,
-          "fiber": 4,
-          "sugar": 6,
-          "sodium": 680,
-          "recipe": null,
-          "createdAt": "2026-11-09T12:30:00.000Z"
-        }
+        ]
+      },
+      "MealLogStatus": {
+        "type": "string",
+        "enum": [
+          "processing",
+          "ready",
+          "failed",
+          "logged"
+        ]
       },
       "MealLogSource": {
         "type": "string",
         "enum": [
           "photo",
+          "text",
           "recipe",
           "manual"
         ]
@@ -7304,125 +7317,98 @@
           "name"
         ]
       },
-      "MealPhotoJob": {
+      "MealLogAnalyzeText": {
         "type": "object",
         "properties": {
-          "jobId": {
-            "type": "string"
-          },
-          "status": {
+          "text": {
             "type": "string",
-            "enum": [
-              "queued",
-              "running",
-              "done",
-              "failed",
-              "cancelled"
-            ]
+            "minLength": 1,
+            "maxLength": 4000
           }
         },
         "required": [
-          "jobId",
-          "status"
+          "text"
         ]
       },
-      "MealPhotoJobStatus": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/MealPhotoJob"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "analysis": {
-                "$ref": "#/components/schemas/MealPhotoAnalysis"
-              },
-              "error": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "analysis",
-              "error"
-            ]
-          }
-        ]
-      },
-      "MealPhotoAnalysis": {
-        "type": [
-          "object",
-          "null"
-        ],
+      "MealLogApprove": {
+        "type": "object",
         "properties": {
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           },
           "serving": {
             "type": [
               "string",
               "null"
-            ]
-          },
-          "confidence": {
-            "type": [
-              "string",
-              "null"
             ],
-            "enum": [
-              "low",
-              "medium",
-              "high",
-              null
-            ]
-          },
-          "calories": {
-            "type": "number"
-          },
-          "protein": {
-            "type": "number"
-          },
-          "carbs": {
-            "type": "number"
-          },
-          "fat": {
-            "type": "number"
-          },
-          "fiber": {
-            "type": "number"
-          },
-          "sugar": {
-            "type": "number"
-          },
-          "sodium": {
-            "type": "number"
+            "maxLength": 120
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 2000
+          },
+          "calories": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "protein": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "carbs": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "fat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "fiber": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "sugar": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "sodium": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000
           }
-        },
-        "required": [
-          "name",
-          "description",
-          "serving",
-          "confidence",
-          "notes"
-        ],
-        "description": "The analysis, once the job is done."
+        }
       },
       "Pantry": {
         "type": "object",
@@ -24010,6 +23996,14 @@
             "required": false,
             "name": "offset",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
           }
         ],
         "responses": {
@@ -24117,6 +24111,271 @@
         }
       }
     },
+    "/api/meal-logs/analyze": {
+      "post": {
+        "operationId": "analyzeMealLog",
+        "tags": [
+          "Meal logs"
+        ],
+        "summary": "Add a meal log for review",
+        "description": "Uploads a meal photo or text description, analyzes it in the background, and adds a meal log to review. With an API key, it needs the `recipes: write` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:write",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealLogAnalyzeText"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The meal log being analyzed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealLog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No photo or text provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The photo is too large.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meal-logs/{logId}/approve": {
+      "post": {
+        "operationId": "approveMealLog",
+        "tags": [
+          "Meal logs"
+        ],
+        "summary": "Approve a meal log",
+        "description": "Approves a reviewed meal log, optionally applying edits, and adds it to the meals log. With an API key, it needs the `recipes: write` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "logId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealLogApprove"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The approved meal log.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such meal log.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already approved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meal-logs/{logId}/photo": {
+      "get": {
+        "operationId": "getMealLogPhoto",
+        "tags": [
+          "Meal logs"
+        ],
+        "summary": "Get a meal log photo",
+        "description": "Returns the uploaded photo for a meal log in review. With an API key, it needs the `recipes: read` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:read",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "logId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The photo.",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such meal log or photo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/meal-logs/{logId}": {
       "delete": {
         "operationId": "deleteMealLog",
@@ -24182,169 +24441,6 @@
           }
         },
         "description": "With an API key, it needs the `recipes: write` permission."
-      }
-    },
-    "/api/nutrition/photo": {
-      "post": {
-        "operationId": "analyzeMealPhoto",
-        "tags": [
-          "Nutrition"
-        ],
-        "summary": "Analyze a meal photo",
-        "description": "Starts background analysis of a meal photo (up to 6 minutes). Poll the returned job to get the estimated nutrition. With an API key, it needs the `recipes: write` permission.",
-        "security": [
-          {
-            "session": []
-          },
-          {
-            "apiKey": []
-          },
-          {
-            "oauth": []
-          }
-        ],
-        "x-merran-permission": "recipes:write",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "photo": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "The analysis job.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MealPhotoJob"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "No photo, or the photo couldn't be read.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not signed in.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Not allowed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "The photo is too large.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/nutrition/photo/{jobId}": {
-      "get": {
-        "operationId": "getMealPhotoAnalysisJob",
-        "tags": [
-          "Nutrition"
-        ],
-        "summary": "Get meal photo analysis",
-        "description": "Returns the status and result of a background meal photo analysis job. With an API key, it needs the `recipes: write` permission.",
-        "security": [
-          {
-            "session": []
-          },
-          {
-            "apiKey": []
-          },
-          {
-            "oauth": []
-          }
-        ],
-        "x-merran-permission": "recipes:write",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "jobId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The analysis job status.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MealPhotoJobStatus"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not signed in.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Not allowed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such analysis job.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/pantry": {

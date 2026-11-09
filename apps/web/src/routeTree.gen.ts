@@ -18,7 +18,6 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppMealsRouteImport } from './routes/_app/meals'
-import { Route as AppPhotoRouteImport } from './routes/_app/photo'
 import { Route as AppPlanRouteImport } from './routes/_app/plan'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppShareRouteImport } from './routes/_app/share'
@@ -91,11 +90,6 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppMealsRoute = AppMealsRouteImport.update({
   id: '/meals',
   path: '/meals',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPhotoRoute = AppPhotoRouteImport.update({
-  id: '/photo',
-  path: '/photo',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlanRoute = AppPlanRouteImport.update({
@@ -260,7 +254,6 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/verify': typeof VerifyRoute
   '/meals': typeof AppMealsRoute
-  '/photo': typeof AppPhotoRoute
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/share': typeof AppShareRoute
@@ -300,7 +293,6 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/verify': typeof VerifyRoute
   '/meals': typeof AppMealsRoute
-  '/photo': typeof AppPhotoRoute
   '/plan': typeof AppPlanRoute
   '/share': typeof AppShareRoute
   '/authorize/household': typeof AuthorizeHouseholdRoute
@@ -341,7 +333,6 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/verify': typeof VerifyRoute
   '/_app/meals': typeof AppMealsRoute
-  '/_app/photo': typeof AppPhotoRoute
   '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/share': typeof AppShareRoute
@@ -384,7 +375,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/verify'
     | '/meals'
-    | '/photo'
     | '/plan'
     | '/settings'
     | '/share'
@@ -424,7 +414,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/verify'
     | '/meals'
-    | '/photo'
     | '/plan'
     | '/share'
     | '/authorize/household'
@@ -464,7 +453,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/verify'
     | '/_app/meals'
-    | '/_app/photo'
     | '/_app/plan'
     | '/_app/settings'
     | '/_app/share'
@@ -574,13 +562,6 @@ declare module '@tanstack/react-router' {
       path: '/meals'
       fullPath: '/meals'
       preLoaderRoute: typeof AppMealsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/photo': {
-      id: '/_app/photo'
-      path: '/photo'
-      fullPath: '/photo'
-      preLoaderRoute: typeof AppPhotoRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/plan': {
@@ -818,7 +799,6 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppMealsRoute: typeof AppMealsRoute
-  AppPhotoRoute: typeof AppPhotoRoute
   AppPlanRoute: typeof AppPlanRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppShareRoute: typeof AppShareRoute
@@ -844,7 +824,6 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppMealsRoute: AppMealsRoute,
-  AppPhotoRoute: AppPhotoRoute,
   AppPlanRoute: AppPlanRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppShareRoute: AppShareRoute,

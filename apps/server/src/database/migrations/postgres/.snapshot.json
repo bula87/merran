@@ -4884,6 +4884,17 @@
         },
         {
           "columnNames": [
+            "household_id",
+            "logged_at"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "meal_logs_household_id_logged_at_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -4899,6 +4910,16 @@
           "composite": false,
           "constraint": false,
           "keyName": "meal_logs_recipe_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "meal_logs_user_id_index",
           "primary": false,
           "unique": false
         }

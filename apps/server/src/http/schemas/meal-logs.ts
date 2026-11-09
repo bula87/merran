@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi"
 import {
   MEAL_LOG_CONFIDENCE,
   MEAL_LOG_SOURCES,
+  MEAL_LOG_STATUSES,
 } from "../../database/entities/index.ts"
 
 export const MealLogSourceSchema = z
@@ -10,10 +11,14 @@ export const MealLogSourceSchema = z
 export const MealLogConfidenceSchema = z
   .enum(MEAL_LOG_CONFIDENCE)
   .openapi("MealLogConfidence")
+export const MealLogStatusSchema = z
+  .enum(MEAL_LOG_STATUSES)
+  .openapi("MealLogStatus")
 
 export const MealLogSchema = z
   .object({
     id: z.string(),
+    status: MealLogStatusSchema,
     name: z.string(),
     serving: z.string().nullable(),
     servings: z.number().nullable(),
@@ -21,6 +26,9 @@ export const MealLogSchema = z
     source: MealLogSourceSchema,
     confidence: MealLogConfidenceSchema.nullable(),
     notes: z.string().nullable(),
+    inputText: z.string().nullable(),
+    hasPhoto: z.boolean(),
+    error: z.string().nullable(),
     calories: z.number().nullable(),
     protein: z.number().nullable(),
     carbs: z.number().nullable(),
@@ -29,60 +37,30 @@ export const MealLogSchema = z
     sugar: z.number().nullable(),
     sodium: z.number().nullable(),
     recipe: z
-      .object({
-        id: z.string(),
-        slug: z.string(),
-        name: z.string(),
-      })
+      .object({ id: z.string(), slug: z.string(), name: z.string() })
       .nullable(),
     createdAt: z.iso.datetime(),
   })
-  .openapi("MealLog", {
-    example: {
-      id: "meal-log-1",
-      name: "Chicken salad",
-      serving: "1 plate",
-      servings: 1,
-      loggedAt: "2026-11-09T12:30:00.000Z",
-      source: "photo",
-      confidence: "medium",
-      notes: "Dressing amount uncertain.",
-      calories: 420,
-      protein: 34,
-      carbs: 18,
-      fat: 24,
-      fiber: 4,
-      sugar: 6,
-      sodium: 680,
-      recipe: null,
-      createdAt: "2026-11-09T12:30:00.000Z",
-    },
-  })
+  .openapi("MealLog")
 
 export const MealLogListSchema = z
-  .object({
-    logs: z.array(MealLogSchema),
-  })
+  .object({ logs: z.array(MealLogSchema) })
   .openapi("MealLogList")
 
 const nutrient = z.number().finite().min(0).max(100000).nullable().optional()
 
 export const MealLogInputSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Give the meal a name.")
-      .max(200, "Keep the name under 200 characters."),
+    name: z.string().trim().min(1).max(200),
     serving: z
       .string()
       .trim()
-      .max(120, "Keep the serving under 120 characters.")
+      .max(120)
       .nullish()
       .transform((v) => v || null),
     servings: z
       .number()
-      .positive("Use a number above 0.")
+      .positive()
       .max(1000)
       .nullish()
       .transform((v) => v ?? null),
@@ -92,7 +70,7 @@ export const MealLogInputSchema = z
     notes: z
       .string()
       .trim()
-      .max(2000, "Keep notes under 2,000 characters.")
+      .max(2000)
       .nullish()
       .transform((v) => v || null),
     calories: nutrient,
@@ -113,6 +91,37 @@ export const MealLogInputSchema = z
 
 export type MealLogInput = z.infer<typeof MealLogInputSchema>
 
+export const MealLogAnalyzeTextSchema = z
+  .object({
+    text: z.string().trim().min(1).max(4000),
+  })
+  .openapi("MealLogAnalyzeText")
+
+export const MealLogApproveSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    serving: z
+      .string()
+      .trim()
+      .max(120)
+      .nullish()
+      .transform((v) => (v === undefined ? undefined : v || null)),
+    notes: z
+      .string()
+      .trim()
+      .max(2000)
+      .nullish()
+      .transform((v) => (v === undefined ? undefined : v || null)),
+    calories: nutrient,
+    protein: nutrient,
+    carbs: nutrient,
+    fat: nutrient,
+    fiber: nutrient,
+    sugar: nutrient,
+    sodium: nutrient,
+  })
+  .openapi("MealLogApprove")
+
 export const MealLogParam = z.object({
   logId: z.string().openapi({ param: { name: "logId", in: "path" } }),
 })
@@ -120,4 +129,5 @@ export const MealLogParam = z.object({
 export const MealLogListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  status: z.string().optional(),
 })

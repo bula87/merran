@@ -21,10 +21,10 @@ const route = createRoute({
   },
 })
 
-export default (router: Router, _deps: AppDeps) => {
+export default (router: Router, deps: AppDeps) => {
   router.openapi(route, async (c) => {
-    const { em, householdId } = inHousehold(c)
-    await deleteMealLog(em, householdId, c.req.valid("param").logId)
+    const { em } = inHousehold(c)
+    await deleteMealLog(em, c.req.valid("param").logId, deps)
     return c.body(null, 204)
   })
 }
