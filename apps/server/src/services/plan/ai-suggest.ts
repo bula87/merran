@@ -183,6 +183,16 @@ const AiPlan = z.object({
 
 export type AiSuggestStatus = "requesting_large_model" | "fallback_small_model"
 
+const LARGE_MODEL_TIMEOUT_MS = 6 * 60 * 1000
+const SMALL_MODEL_TIMEOUT_MS = 3 * 60 * 1000
+
+function isTimeoutError(error: unknown) {
+  return (
+    (error instanceof DOMException && error.name === "TimeoutError") ||
+    (error instanceof Error && error.name === "TimeoutError")
+  )
+}
+
 export async function aiSuggestMeals(
   deps: AiDeps,
   em: EntityManager,
@@ -196,6 +206,8 @@ export async function aiSuggestMeals(
     maxCaloriesPerDay?: number
     /** Progress updates for long-running AI requests (e.g. model fallback). */
     onStatus?: (status: AiSuggestStatus) => void | Promise<void>
+    /** Cancel in-flight AI work, e.g. when a background job is stopped. */
+    signal?: AbortSignal
   }
 ): Promise<Suggestion[]> {
   if (options.slots.length === 0) return []
@@ -333,7 +345,11 @@ export async function aiSuggestMeals(
     recipes: pool,
   })
 
-  async function run(modelRef?: string) {
+  async function run(modelRef: string | undefined, timeoutMs: number) {
+    const timeout = AbortSignal.timeout(timeoutMs)
+    const signal = options.signal
+      ? AbortSignal.any([timeout, options.signal])
+      : timeout
     const r = await useAi(
       deps,
       em,
@@ -358,6 +374,7 @@ export async function aiSuggestMeals(
           }),
           maxOutputTokens: 8000,
           temperature: 0,
+          abortSignal: signal,
         })
     )
     return r.output
@@ -391,23 +408,50 @@ export async function aiSuggestMeals(
   let output: z.infer<typeof AiPlan>
   const onStatus = options.onStatus
   try {
+    if (options.signal?.aborted)
+      throw options.signal.reason ?? new Error("Aborted")
     await onStatus?.("requesting_large_model")
-    output = await run()
+    output = await run(undefined, LARGE_MODEL_TIMEOUT_MS)
   } catch (error) {
+    if (options.signal?.aborted) throw error
     if (!shouldFallback(error)) throw error
     deps.logger?.warn(
-      { err: error, task: "plan" },
-      "AI plan failed, trying small model"
+      {
+        err: error,
+        task: "plan",
+        timeout: isTimeoutError(error),
+        model: "large",
+      },
+      isTimeoutError(error)
+        ? "AI plan timed out, trying small model"
+        : "AI plan failed, trying small model"
     )
     await onStatus?.("fallback_small_model")
     try {
+      if (options.signal?.aborted)
+        throw options.signal.reason ?? new Error("Aborted")
       const small = await resolveTask(deps, em, options.householdId, "swaps", 0)
       if (small.ok) {
-        output = await run(small.ref)
+        output = await run(small.ref, SMALL_MODEL_TIMEOUT_MS)
       } else {
         friendlyError(error)
       }
     } catch (fallbackError) {
+      if (options.signal?.aborted) throw fallbackError
+      if (isTimeoutError(error) && isTimeoutError(fallbackError)) {
+        throw new AppError(
+          "upstream",
+          "ai_timeout",
+          "The AI took too long to fill the week. Try again, or fill fewer meals."
+        )
+      }
+      if (isTimeoutError(fallbackError)) {
+        throw new AppError(
+          "upstream",
+          "ai_timeout",
+          "The AI took too long to fill the week. Try again, or fill fewer meals."
+        )
+      }
       if (shouldFallback(fallbackError) && fallbackError !== error) {
         deps.logger?.warn(
           { err: fallbackError, task: "plan" },

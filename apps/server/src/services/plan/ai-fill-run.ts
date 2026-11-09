@@ -360,6 +360,7 @@ export const planAiFillJob: JobHandler = {
           profile,
           maxCaloriesPerDay: 2000,
           onStatus,
+          signal,
         })
         suggestions.push(...run)
         chosenIds.push(...run.map((s) => s.recipe.id))
@@ -379,16 +380,15 @@ export const planAiFillJob: JobHandler = {
         total: typedSlots.length,
       }
     } catch (error) {
-      if (signal.aborted) throw error
+      if (signal.aborted) {
+        const { JobStopped } = await import("../jobs/runner.ts")
+        throw error instanceof JobStopped ? error : new JobStopped()
+      }
       const message =
         error instanceof AppError
           ? error.message
           : "The AI couldn't fill the week. Try again."
       deps.logger?.warn({ err: error, jobId }, "AI fill week job failed")
-      // Persist a ready-to-display failure in result; rethrow marks job failed,
-      // but we also want the error visible. Store result via progress side-effect
-      // is best-effort; the handler return won't run on throw. We'll throw and
-      // let describePlanAiFill surface job.error, but also try to save result.
       try {
         await deps.database.em.fork().nativeUpdate(
           Job,
