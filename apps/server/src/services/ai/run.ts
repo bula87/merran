@@ -475,27 +475,47 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
       outputTokens: result.usage.outputTokens ?? 0,
     })
     const rawResponse = (() => {
-      const r = result as Record<string, unknown>
-      const body: Record<string, unknown> = {}
-      if (typeof r.text === "string") body.text = r.text
-      if (typeof r.reasoningText === "string")
-        body.reasoningText = r.reasoningText
-      if (r.output !== undefined) body.output = r.output
-      if (r.object !== undefined) body.object = r.object
-      if (r.response && typeof r.response === "object") {
-        const res = r.response as Record<string, unknown>
-        body.responseBody = res.body
-        body.responseId = res.id
-        body.responseModelId = res.modelId
-        body.headers = res.headers
+      try {
+        const r = result as Record<string, unknown>
+        const body: Record<string, unknown> = {}
+        const read = (key: string) => {
+          try {
+            return r[key]
+          } catch {
+            return undefined
+          }
+        }
+        const text = read("text")
+        if (typeof text === "string") body.text = text
+        const reasoningText = read("reasoningText")
+        if (typeof reasoningText === "string")
+          body.reasoningText = reasoningText
+        const output = read("output")
+        if (output !== undefined) body.output = output
+        const object = read("object")
+        if (object !== undefined) body.object = object
+        const response = read("response")
+        if (response && typeof response === "object") {
+          const res = response as Record<string, unknown>
+          body.responseBody = res.body
+          body.responseId = res.id
+          body.responseModelId = res.modelId
+          body.headers = res.headers
+        }
+        const request = read("request")
+        if (request && typeof request === "object") body.request = request
+        const warnings = read("warnings")
+        if (Array.isArray(warnings) && warnings.length > 0)
+          body.warnings = warnings
+        const finishReason = read("finishReason")
+        if (finishReason) body.finishReason = finishReason
+        const steps = read("steps")
+        if (Array.isArray(steps) && steps.length > 0)
+          body.stepCount = steps.length
+        return Object.keys(body).length > 0 ? body : undefined
+      } catch {
+        return undefined
       }
-      if (r.request && typeof r.request === "object") {
-        body.request = r.request
-      }
-      if (Array.isArray(r.warnings) && r.warnings.length > 0)
-        body.warnings = r.warnings
-      if (r.finishReason) body.finishReason = r.finishReason
-      return Object.keys(body).length > 0 ? body : undefined
     })()
     deps.logger?.info(
       {
@@ -509,7 +529,15 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
           ms: Date.now() - started,
           inputTokens: result.usage.inputTokens ?? 0,
           outputTokens: result.usage.outputTokens ?? 0,
-          output: summarizeAiValue(options.aiLog?.output?.(result)),
+          output: summarizeAiValue(
+            (() => {
+              try {
+                return options.aiLog?.output?.(result)
+              } catch {
+                return undefined
+              }
+            })()
+          ),
           rawResponse,
         },
       },
