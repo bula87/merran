@@ -19,13 +19,15 @@ export const suggest = (slots: PlanSlot[], exclude: string[] = []) =>
 export async function suggestAi(
   slots: PlanSlot[],
   exclude: string[] = [],
-  onStatus?: (status: AiSuggestStatus) => void
+  onStatus?: (status: AiSuggestStatus) => void,
+  signal?: AbortSignal
 ): Promise<Schemas["Suggestions"]> {
   const response = await fetch("/api/plan/suggest/ai", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
     body: JSON.stringify({ slots, exclude }),
+    signal,
   })
 
   if (!response.ok) {
@@ -92,6 +94,10 @@ export async function suggestAi(
   }
 
   while (true) {
+    if (signal?.aborted) {
+      void reader.cancel()
+      throw new DOMException("Aborted", "AbortError")
+    }
     const { done, value } = await reader.read()
     buffer += decoder.decode(value, { stream: !done })
     const lines = buffer.split(/\r?\n/)

@@ -123,8 +123,13 @@ function FillWeek({
     : [...clock.meals]
   const [chosen, setChosen] = React.useState<Meal[]>(defaultChosen)
   const profileMealsApplied = React.useRef(false)
+  const [mealsReady, setMealsReady] = React.useState(!ai)
   React.useEffect(() => {
-    if (!ai || profileMealsApplied.current) return
+    if (!ai) {
+      setMealsReady(true)
+      return
+    }
+    if (profileMealsApplied.current) return
     const fromProfile = (profile.data?.mealsPerDay ?? []).filter(
       (meal): meal is Meal => clock.meals.includes(meal as Meal)
     )
@@ -133,10 +138,20 @@ function FillWeek({
       setChanges({})
       setPassed([])
       profileMealsApplied.current = true
+      setMealsReady(true)
       return
     }
-    if (profile.isFetched) profileMealsApplied.current = true
-  }, [ai, profile.data?.mealsPerDay, profile.isFetched, clock.meals])
+    if (profile.isFetched || profile.isError) {
+      profileMealsApplied.current = true
+      setMealsReady(true)
+    }
+  }, [
+    ai,
+    profile.data?.mealsPerDay,
+    profile.isFetched,
+    profile.isError,
+    clock.meals,
+  ])
   /** Re-rolled ideas, and ideas left out (null), by slot. */
   const [changes, setChanges] = React.useState<
     Record<string, Suggestion | null>
@@ -160,28 +175,43 @@ function FillWeek({
       .map((meal) => ({ date, meal }))
       .filter((slot) => !taken.has(slotKey(slot)) && !skipNight(slot))
   )
-  const [querySlots, setQuerySlots] = React.useState(slots)
+  const [querySlots, setQuerySlots] = React.useState<PlanSlot[]>(() =>
+    ai ? [] : slots
+  )
+  const initialAiSlotsSet = React.useRef(false)
   React.useEffect(() => {
+    if (ai && !mealsReady) return
     if (!ai) {
+      setQuerySlots(slots)
+      return
+    }
+    if (!initialAiSlotsSet.current) {
+      initialAiSlotsSet.current = true
       setQuerySlots(slots)
       return
     }
     const t = window.setTimeout(() => setQuerySlots(slots), 450)
     return () => window.clearTimeout(t)
-  }, [ai, JSON.stringify(slots)])
+  }, [ai, mealsReady, JSON.stringify(slots)])
   const aiReady = !ai || aiFor.ready === true
   const ideas = useQuery({
     queryKey: ["plan", ai ? "suggest-ai" : "suggest", querySlots],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!ai) return suggest(querySlots)
       setAiStatus(null)
       try {
-        return await suggestAi(querySlots, [], (status) => setAiStatus(status))
+        return await suggestAi(
+          querySlots,
+          [],
+          (status) => setAiStatus(status),
+          signal
+        )
       } finally {
         setAiStatus(null)
       }
     },
-    enabled: querySlots.length > 0 && aiReady,
+    enabled: (ai ? mealsReady : true) && querySlots.length > 0 && aiReady,
+    retry: ai ? false : 1,
     // Fresh ideas each time it opens; the same ones while it's open.
     staleTime: Infinity,
     gcTime: 0,
@@ -308,15 +338,22 @@ function FillWeek({
         </div>
       )}
 
-      {slots.length === 0 ? (
+      {ai && !mealsReady ? (
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      ) : activeSlots.length === 0 && !ideas.isFetching ? (
         <p className="text-sm text-muted-foreground">
           {t("plan.fill.allPlanned")}
         </p>
       ) : ideas.isPending ? (
         <div className="grid gap-2">
-          {Array.from({ length: Math.min(slots.length, 4) }, (_, index) => (
-            <Skeleton key={index} className="h-14 rounded-xl" />
-          ))}
+          {Array.from(
+            { length: Math.min(activeSlots.length || slots.length, 4) },
+            (_, index) => (
+              <Skeleton key={index} className="h-14 rounded-xl" />
+            )
+          )}
         </div>
       ) : ideas.isError ? (
         <p className="text-sm text-muted-foreground">{t("plan.fill.failed")}</p>
