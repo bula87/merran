@@ -155,7 +155,7 @@ export const NewAiKeySchema = z
 export const AiPolicySchema = (
   aiPolicySchema as z.ZodType<z.infer<typeof aiPolicySchema>>
 ).openapi("AiPolicy", {
-  description: `Who may use the server's keys: \`serverKeysFor\` is ${SERVER_KEYS_FOR.join(", ")} (the server admins' households, the chosen \`households\`, every household, or none). \`monthlyLimit\` is each household's in US dollars on the server's keys (null for none), and \`limits\` a household's own instead. \`tasks\` and \`models\` are what the server's keys cover (no models means any). \`householdKeys\` and \`householdAddresses\` say whether households may add their own keys and addresses. \`large\` and \`small\` are the models households use when they haven't picked.`,
+  description: `Who may use the server's keys: \`serverKeysFor\` is ${SERVER_KEYS_FOR.join(", ")} (the server admins' households, the chosen \`households\`, every household, or none). \`monthlyLimit\` is each household's in US dollars on the server's keys (null for none), and \`limits\` a household's own instead. \`tasks\` and \`models\` are what the server's keys cover (no models means any). \`householdKeys\` and \`householdAddresses\` say whether households may add their own keys and addresses. \`large\`, \`small\`, \`image\`, and \`translation\` are the models households use when they haven't picked.`,
   example: { ...DEFAULT_AI_POLICY, monthlyLimit: 5 },
 })
 
@@ -270,6 +270,14 @@ export const HouseholdAiSettingsSchema = z
   .object({
     large: ModelRefSchema.nullable(),
     small: ModelRefSchema.nullable(),
+    image: ModelRefSchema.nullable().openapi({
+      description:
+        "Model for image processing; null to go by its keys, or the server's.",
+    }),
+    translation: ModelRefSchema.nullable().openapi({
+      description:
+        "Model for translations; null to go by its keys, or the server's.",
+    }),
     tasks: z.partialRecord(z.enum(AI_TASKS), ModelRefSchema).openapi({
       description: "A model for a task of its own.",
     }),
@@ -286,6 +294,8 @@ export const HouseholdAiSettingsSchema = z
     example: {
       large: null,
       small: null,
+      image: null,
+      translation: null,
       tasks: {},
       monthlyLimit: 10,
       autoTidy: false,
@@ -379,7 +389,14 @@ export const HouseholdAiSchema = z
         keyAlerts: [],
       },
       keys: [],
-      settings: { large: null, small: null, tasks: {}, monthlyLimit: null },
+      settings: {
+        large: null,
+        small: null,
+        image: null,
+        translation: null,
+        tasks: {},
+        monthlyLimit: null,
+      },
       models: [],
       usage: {
         months: [{ month: "2026-10", server: 1.24, household: 0, calls: 31 }],

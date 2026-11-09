@@ -1,4 +1,5 @@
 import {
+  AI_TASKS,
   DEFAULT_AI_POLICY,
   serverKeysCover,
   type AiPolicy,
@@ -16,7 +17,13 @@ export async function getPolicy(
   settings: AppDeps["settings"]
 ): Promise<AiPolicy> {
   // Fields added later start as their defaults.
-  return { ...DEFAULT_AI_POLICY, ...(await settings.server(AI.policy)) }
+  const stored = await settings.server(AI.policy)
+  const policy = { ...DEFAULT_AI_POLICY, ...stored }
+  // A saved policy from before the translate task existed won't list it.
+  if (stored?.tasks && !stored.tasks.includes("translate")) {
+    policy.tasks = [...stored.tasks, "translate"]
+  }
+  return policy
 }
 
 /** Saves the policy, dropping any households that are gone. */

@@ -9,7 +9,14 @@ import { householdAiQuery } from "@/features/ai/queries"
 import { householdQuery, isAdminRole } from "@/features/household/queries"
 
 /** The tasks a notice can be about. */
-type Task = "import" | "tidy" | "swaps" | "assistant" | "discover" | "receipts"
+type Task =
+  | "import"
+  | "tidy"
+  | "swaps"
+  | "assistant"
+  | "discover"
+  | "receipts"
+  | "translate"
 
 /**
  * Whether the household can use AI for a task, and if not, why. Undefined

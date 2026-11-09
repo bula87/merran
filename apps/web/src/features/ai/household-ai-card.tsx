@@ -318,17 +318,51 @@ export function HouseholdAiCard() {
                   task="swaps"
                   onChange={(small) => change({ small })}
                 />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`${id}-image`}>
+                  {t("ai.models.image")}
+                </FieldLabel>
+                <ModelSelect
+                  id={`${id}-image`}
+                  value={picked.image}
+                  options={data.models}
+                  noneLabel={t("ai.models.default")}
+                  showSource
+                  onChange={(image) => change({ image })}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`${id}-translation`}>
+                  {t("ai.models.translation")}
+                </FieldLabel>
+                <ModelSelect
+                  id={`${id}-translation`}
+                  value={picked.translation}
+                  options={data.models}
+                  noneLabel={t("ai.models.default")}
+                  showSource
+                  onChange={(translation) => change({ translation })}
+                />
                 <FieldDescription>{t("ai.models.sizesHint")}</FieldDescription>
               </Field>
               {(picked.large ||
                 picked.small ||
+                picked.image ||
+                picked.translation ||
                 Object.keys(picked.tasks).length > 0) && (
                 <div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      change({ large: null, small: null, tasks: {} })
+                      change({
+                        large: null,
+                        small: null,
+                        image: null,
+                        translation: null,
+                        tasks: {},
+                      })
                     }
                   >
                     {t("ai.models.useSuggested")}
@@ -358,7 +392,11 @@ export function HouseholdAiCard() {
                         id={`${id}-${task}`}
                         value={picked.tasks[task] ?? null}
                         options={data.models}
-                        noneLabel={t(`ai.models.${TASK_SIZES[task]}Default`)}
+                        noneLabel={t(
+                          task === "translate"
+                            ? "ai.models.translationDefault"
+                            : `ai.models.${TASK_SIZES[task]}Default`
+                        )}
                         showSource
                         task={task}
                         onChange={(ref) => {

@@ -354,6 +354,30 @@ export function ServerAiPolicyCard() {
               noneLabel={t("ai.models.keyDefault")}
               onChange={(small) => change({ small })}
             />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`${id}-image`}>
+              {t("ai.models.image")}
+            </FieldLabel>
+            <ModelSelect
+              id={`${id}-image`}
+              value={policy.image}
+              options={data.models}
+              noneLabel={t("ai.models.keyDefault")}
+              onChange={(image) => change({ image })}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`${id}-translation`}>
+              {t("ai.models.translation")}
+            </FieldLabel>
+            <ModelSelect
+              id={`${id}-translation`}
+              value={policy.translation}
+              options={data.models}
+              noneLabel={t("ai.models.keyDefault")}
+              onChange={(translation) => change({ translation })}
+            />
             <FieldDescription>{t("ai.models.sizesHint")}</FieldDescription>
           </Field>
 

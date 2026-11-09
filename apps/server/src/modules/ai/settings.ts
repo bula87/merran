@@ -34,6 +34,8 @@ export const aiPolicySchema: z.ZodType<AiPolicy> = z.object({
   householdAddresses: z.boolean(),
   large: modelRefSchema.nullable(),
   small: modelRefSchema.nullable(),
+  image: modelRefSchema.nullable(),
+  translation: modelRefSchema.nullable(),
 })
 
 /** What Merran knows of a key from the environment: its credit, and if it ran out. */
