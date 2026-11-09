@@ -20,6 +20,7 @@ import type { EntityManager } from "@mikro-orm/sql"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 
+import { AppError } from "../../core/errors.ts"
 import { toNumber } from "../../database/numbers.ts"
 import {
   Household,
@@ -28,6 +29,8 @@ import {
   RecipeIngredient,
 } from "../../database/entities/index.ts"
 import type { UserProfile } from "../../http/schemas/user-profile.ts"
+import { getPolicy } from "../ai/policy.ts"
+import { householdAi } from "../ai/status.ts"
 import { decodeDiets } from "../recipes/diet-labels.ts"
 import { photoUrls } from "../recipes/photos/photos.ts"
 import { totalMinutes } from "../recipes/recipes.ts"
@@ -327,30 +330,62 @@ export async function aiSuggestMeals(
     2
   )
 
-  const { output } = await useAi(
-    deps,
-    em,
-    {
-      householdId: options.householdId,
-      userId: options.userId,
-      task: "plan",
-      needs: ["structured"],
-      aiLog: {
-        input: { slotCount: options.slots.length, poolSize: pool.length },
+  async function run(modelRef?: string) {
+    return useAi(
+      deps,
+      em,
+      {
+        householdId: options.householdId,
+        userId: options.userId,
+        task: "plan",
+        needs: ["structured"],
+        modelRef,
+        aiLog: {
+          input: { slotCount: options.slots.length, poolSize: pool.length },
+        },
       },
-    },
-    (model) =>
-      generateText({
-        model,
-        system,
-        prompt,
-        output: Output.object({
-          schema: AiPlan,
-          name: "meal_plan_suggestions",
-        }),
-        maxOutputTokens: 4000,
-      })
-  )
+      (model) =>
+        generateText({
+          model,
+          system,
+          prompt,
+          output: Output.object({
+            schema: AiPlan,
+            name: "meal_plan_suggestions",
+          }),
+          maxOutputTokens: 4000,
+        })
+    )
+  }
+
+  function shouldFallback(error: unknown) {
+    if (!(error instanceof AppError)) return true
+    return ![
+      "ai_noKey",
+      "ai_notCovered",
+      "ai_overLimit",
+      "ai_ownLimit",
+    ].includes(error.code)
+  }
+
+  let result
+  try {
+    result = await run()
+  } catch (error) {
+    if (!shouldFallback(error)) throw error
+    const [ai, policy] = await Promise.all([
+      householdAi(em, options.householdId),
+      getPolicy(deps.settings),
+    ])
+    const smallRef = ai.small ?? policy.small ?? null
+    if (!smallRef) throw error
+    deps.logger?.warn(
+      { err: error, task: "plan", fallback: "small" },
+      "AI plan falling back to small model"
+    )
+    result = await run(smallRef)
+  }
+  const { output } = result
 
   const chosenBySlot = new Map<string, string>()
   const chosenDishes = new Set<string>()

@@ -19,9 +19,10 @@ export async function getPolicy(
   // Fields added later start as their defaults.
   const stored = await settings.server(AI.policy)
   const policy = { ...DEFAULT_AI_POLICY, ...stored }
-  // A saved policy from before the translate task existed won't list it.
-  if (stored?.tasks && !stored.tasks.includes("translate")) {
-    policy.tasks = [...stored.tasks, "translate"]
+  // A saved policy from before newer tasks existed won't list them.
+  if (stored?.tasks) {
+    const missing = AI_TASKS.filter((task) => !stored.tasks.includes(task))
+    if (missing.length > 0) policy.tasks = [...stored.tasks, ...missing]
   }
   return policy
 }
