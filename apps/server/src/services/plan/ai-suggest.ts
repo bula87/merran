@@ -17,7 +17,12 @@ import {
   type Reason,
 } from "@merran/shared"
 import type { EntityManager } from "@mikro-orm/sql"
-import { generateText, Output } from "ai"
+import {
+  NoObjectGeneratedError,
+  NoOutputGeneratedError,
+  generateText,
+  Output,
+} from "ai"
 import { z } from "zod"
 
 import { AppError } from "../../core/errors.ts"
@@ -29,12 +34,11 @@ import {
   RecipeIngredient,
 } from "../../database/entities/index.ts"
 import type { UserProfile } from "../../http/schemas/user-profile.ts"
-import { getPolicy } from "../ai/policy.ts"
-import { householdAi } from "../ai/status.ts"
 import { decodeDiets } from "../recipes/diet-labels.ts"
 import { photoUrls } from "../recipes/photos/photos.ts"
 import { totalMinutes } from "../recipes/recipes.ts"
 import { tagKey, tagsOf } from "../recipes/tags.ts"
+import { resolveTask } from "../ai/status.ts"
 import { useAi, type AiDeps } from "../ai/run.ts"
 import type { Slot, Suggestion } from "./suggest.ts"
 
@@ -265,73 +269,59 @@ export async function aiSuggestMeals(
       (a, b) =>
         (b.rating ?? 0) - (a.rating ?? 0) || a.name.localeCompare(b.name)
     )
-    .slice(0, 350)
+    .slice(0, 140)
     .map((r) => ({
       id: r.id,
-      name: r.name,
-      calories: r.calories,
-      nutrition: r.nutrition,
-      tags: r.tags.slice(0, 8),
-      totalMinutes: r.totalMinutes,
-      servings: r.servings,
-      diets: r.diets,
+      n: r.name,
+      cal: r.calories,
+      p: r.nutrition?.protein ?? null,
+      c: r.nutrition?.carbs ?? null,
+      f: r.nutrition?.fat ?? null,
+      tags: r.tags.slice(0, 6),
+      min: r.totalMinutes,
     }))
   const poolSet = new Set(pool.map((r) => r.id))
 
   const slotPayload = options.slots.map((slot) => ({
     date: slot.date,
     meal: slot.meal,
-    weekday: [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ][dayOfWeek(slot.date)],
+    day: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+      dayOfWeek(slot.date)
+    ],
     theme:
       themeOf(slot) && themeOf(slot)!.kind !== "skip"
         ? themeLabel(themeOf(slot)!)
         : themeOf(slot)?.kind === "skip"
-          ? "skip/eat out"
+          ? "skip"
           : null,
-    allowedRecipeIds: (allowedBySlot.get(`${slot.date}:${slot.meal}`) ?? [])
+    allowed: (allowedBySlot.get(`${slot.date}:${slot.meal}`) ?? [])
       .filter((r) => poolSet.has(r.id))
       .map((r) => r.id)
-      .slice(0, 120),
+      .slice(0, 50),
   }))
 
-  const system = `You plan weekly meals for a household. Choose recipes only from the provided recipe pool and only recipe IDs listed as allowed for each slot. Respect allergies, dietary needs, dislikes, theme nights, and practical constraints. Prefer liked foods and the user's goal when reasonable. Aim for about ${maxCaloriesPerDay} kcal per day across that day's planned meals when calorie data is available (it is an estimate). Do not repeat the same recipe unless unavoidable. Return structured JSON only.`
+  const system = `Plan weekly meals. Pick one recipeId per slot from that slot's "allowed" IDs (must exist in recipes). Respect allergies, diets, dislikes, theme nights. Prefer liked foods and goal. Aim for ~${maxCaloriesPerDay} kcal/day when calories (cal) are known. Do not repeat recipes. Return only JSON matching the schema: {"suggestions":[{"date":"YYYY-MM-DD","meal":"breakfast|lunch|dinner|snack","recipeId":"..."}]}.`
 
-  const prompt = JSON.stringify(
-    {
-      maxCaloriesPerDay,
-      today,
-      userProfile: {
-        age: profile.age,
-        weightKg: profile.weightKg,
-        heightCm: profile.heightCm,
-        goal: profile.goal,
-        mealsPerDay: profile.mealsPerDay,
-        cookingDevices: profile.cookingDevices,
-        allergies: profile.allergies,
-        favoriteFoods: profile.favoriteFoods,
-        dislikedFoods: profile.dislikedFoods,
-      },
-      household: {
-        diets: tastes.diets,
-        weeknightDinnerMaxMinutes: tastes.weeknightMinutes,
-      },
-      slots: slotPayload,
-      recipes: pool,
+  const prompt = JSON.stringify({
+    maxCaloriesPerDay,
+    userProfile: {
+      goal: profile.goal,
+      allergies: profile.allergies,
+      favoriteFoods: profile.favoriteFoods,
+      dislikedFoods: profile.dislikedFoods,
+      mealsPerDay: profile.mealsPerDay,
+      cookingDevices: profile.cookingDevices,
     },
-    null,
-    2
-  )
+    household: {
+      diets: tastes.diets,
+      weeknightMaxMin: tastes.weeknightMinutes,
+    },
+    slots: slotPayload,
+    recipes: pool,
+  })
 
   async function run(modelRef?: string) {
-    return useAi(
+    const r = await useAi(
       deps,
       em,
       {
@@ -353,9 +343,11 @@ export async function aiSuggestMeals(
             schema: AiPlan,
             name: "meal_plan_suggestions",
           }),
-          maxOutputTokens: 4000,
+          maxOutputTokens: 8000,
+          temperature: 0,
         })
     )
+    return r.output
   }
 
   function shouldFallback(error: unknown) {
@@ -368,24 +360,47 @@ export async function aiSuggestMeals(
     ].includes(error.code)
   }
 
-  let result
+  function friendlyError(error: unknown): never {
+    if (error instanceof AppError) throw error
+    if (
+      NoOutputGeneratedError.isInstance(error) ||
+      NoObjectGeneratedError.isInstance(error)
+    ) {
+      throw new AppError(
+        "upstream",
+        "ai_answer_unreadable",
+        "The AI's answer couldn't be read. Try again, or pick another model in Settings, Household, AI."
+      )
+    }
+    throw error
+  }
+
+  let output: z.infer<typeof AiPlan>
   try {
-    result = await run()
+    output = await run()
   } catch (error) {
     if (!shouldFallback(error)) throw error
-    const [ai, policy] = await Promise.all([
-      householdAi(em, options.householdId),
-      getPolicy(deps.settings),
-    ])
-    const smallRef = ai.small ?? policy.small ?? null
-    if (!smallRef) throw error
     deps.logger?.warn(
-      { err: error, task: "plan", fallback: "small" },
-      "AI plan falling back to small model"
+      { err: error, task: "plan" },
+      "AI plan failed, trying small model"
     )
-    result = await run(smallRef)
+    try {
+      const small = await resolveTask(deps, em, options.householdId, "swaps", 0)
+      if (small.ok) {
+        output = await run(small.ref)
+      } else {
+        friendlyError(error)
+      }
+    } catch (fallbackError) {
+      if (shouldFallback(fallbackError) && fallbackError !== error) {
+        deps.logger?.warn(
+          { err: fallbackError, task: "plan" },
+          "AI plan fallback failed"
+        )
+      }
+      friendlyError(fallbackError)
+    }
   }
-  const { output } = result
 
   const chosenBySlot = new Map<string, string>()
   const chosenDishes = new Set<string>()

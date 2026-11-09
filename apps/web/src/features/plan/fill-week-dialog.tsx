@@ -140,25 +140,35 @@ function FillWeek({
       .map((meal) => ({ date, meal }))
       .filter((slot) => !taken.has(slotKey(slot)) && !skipNight(slot))
   )
+  const [querySlots, setQuerySlots] = React.useState(slots)
+  React.useEffect(() => {
+    if (!ai) {
+      setQuerySlots(slots)
+      return
+    }
+    const t = window.setTimeout(() => setQuerySlots(slots), 450)
+    return () => window.clearTimeout(t)
+  }, [ai, JSON.stringify(slots)])
   const aiReady = !ai || aiFor.ready === true
   const ideas = useQuery({
-    queryKey: ["plan", ai ? "suggest-ai" : "suggest", slots],
-    queryFn: () => (ai ? suggestAi(slots) : suggest(slots)),
-    enabled: slots.length > 0 && aiReady,
+    queryKey: ["plan", ai ? "suggest-ai" : "suggest", querySlots],
+    queryFn: () => (ai ? suggestAi(querySlots) : suggest(querySlots)),
+    enabled: querySlots.length > 0 && aiReady,
     // Fresh ideas each time it opens; the same ones while it's open.
     staleTime: Infinity,
     gcTime: 0,
   })
 
+  const activeSlots = ai ? querySlots : slots
   const fromServer = new Map(
     (ideas.data?.suggestions ?? []).map((idea) => [slotKey(idea), idea])
   )
-  const rows = slots.flatMap((slot) => {
+  const rows = activeSlots.flatMap((slot) => {
     const key = slotKey(slot)
     const idea = key in changes ? changes[key] : fromServer.get(key)
     return idea ? [{ ...idea, key }] : []
   })
-  const unfilled = slots.filter((slot) => {
+  const unfilled = activeSlots.filter((slot) => {
     const key = slotKey(slot)
     return !(key in changes) && !fromServer.has(key)
   }).length
