@@ -68,7 +68,7 @@ async function imagePart(photo: Buffer) {
       .resize(MAX_SIDE, MAX_SIDE, { fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: 82, mozjpeg: true })
       .toBuffer()
-    return { type: "image" as const, image: data, mediaType: "image/jpeg" }
+    return { type: "file" as const, data, mediaType: "image/jpeg" }
   } catch {
     throw new AppError(
       "invalid",
@@ -170,16 +170,17 @@ export async function analyzeMealPhoto(
     return toAnalysis(output)
   }
 
-  try {
-    return await run()
-  } catch (error) {
-    if (error instanceof AppError) throw error
-    const [ai, policy] = await Promise.all([
-      householdAi(em, options.householdId),
-      getPolicy(deps.settings),
-    ])
-    const imageRef = ai.image ?? policy.image
-    if (!imageRef) throw error
-    return await run(imageRef)
+  const [ai, policy] = await Promise.all([
+    householdAi(em, options.householdId),
+    getPolicy(deps.settings),
+  ])
+  const imageRef = ai.image ?? policy.image
+  if (imageRef) {
+    try {
+      return await run(imageRef)
+    } catch (error) {
+      if (error instanceof AppError) throw error
+    }
   }
+  return await run()
 }

@@ -170,8 +170,9 @@ export function toRecipeInput(
 }
 
 /**
- * Reads a recipe with the household's import model. Photos/PDFs try the
- * image processing model as a fallback when the import model fails.
+ * Reads a recipe with the household's import model. For photos/PDFs, the
+ * image processing model is tried first when configured, then the import
+ * model is used if it fails or is not configured.
  */
 export async function readRecipe(
   deps: AiDeps,
@@ -223,18 +224,24 @@ export async function readRecipe(
     return toRecipeInput(output, options.source, options.sourceUrl ?? null)
   }
 
-  try {
-    return await run(options.modelRef)
-  } catch (error) {
-    if (options.modelRef || options.source !== "photos") throw error
+  if (options.modelRef) return await run(options.modelRef)
+
+  if (options.source === "photos") {
     const [ai, policy] = await Promise.all([
       householdAi(em, options.householdId),
       getPolicy(deps.settings),
     ])
     const imageRef = ai.image ?? policy.image
-    if (!imageRef) throw error
-    return await run(imageRef)
+    if (imageRef) {
+      try {
+        return await run(imageRef)
+      } catch (error) {
+        if (error instanceof AppError) throw error
+      }
+    }
   }
+
+  return await run()
 }
 
 /** Text to read: the pasted text, as it is. */

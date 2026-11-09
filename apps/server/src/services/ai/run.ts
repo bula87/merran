@@ -40,6 +40,44 @@ export type AiDeps = Pick<AppDeps, "settings" | "fetcher" | "ai"> & {
   logger?: AppDeps["logger"]
 }
 
+function errorDetail(error: unknown): Record<string, unknown> {
+  if (APICallError.isInstance(error)) {
+    return {
+      message: error.message,
+      statusCode: error.statusCode,
+      url: error.url,
+      responseBody:
+        typeof error.responseBody === "string"
+          ? error.responseBody.slice(0, 2000)
+          : undefined,
+      isRetryable: error.isRetryable,
+      cause: error.cause instanceof Error ? error.cause.message : undefined,
+    }
+  }
+  if (RetryError.isInstance(error)) {
+    return { message: error.message, lastError: errorDetail(error.lastError) }
+  }
+  if (error instanceof Error) {
+    const any = error as Error & {
+      statusCode?: unknown
+      responseBody?: unknown
+      cause?: unknown
+    }
+    return {
+      name: error.name,
+      message: error.message,
+      statusCode:
+        typeof any.statusCode === "number" ? any.statusCode : undefined,
+      responseBody:
+        typeof any.responseBody === "string"
+          ? any.responseBody.slice(0, 2000)
+          : undefined,
+      cause: any.cause instanceof Error ? any.cause.message : undefined,
+    }
+  }
+  return { message: String(error) }
+}
+
 /** Why a feature can't use AI, said so someone can fix it. */
 const UNAVAILABLE: Record<
   Unavailable,
@@ -305,7 +343,7 @@ export async function prepareAi(
             householdId: options.householdId,
             userId: options.userId,
             ms: Date.now() - started,
-            error: error instanceof Error ? error.message : String(error),
+            ...errorDetail(error),
           },
         },
         "AI failed"
@@ -408,7 +446,7 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
             model,
             source: key.source,
             ms: Date.now() - started,
-            error: error instanceof Error ? error.message : String(error),
+            ...errorDetail(error),
           },
         },
         "AI error"
