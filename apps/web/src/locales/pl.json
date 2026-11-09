@@ -1307,7 +1307,10 @@
       "added_many": "Dodano {{count}} posiłków do planu.",
       "added_other": "Dodano {{count}} posiłku do planu.",
       "cancel": "Anuluj",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "aiButton": "Wypełnij tydzień AI",
+      "aiTitle": "Wypełnij tydzień AI",
+      "aiDescription": "AI dobiera posiłki z Twoich przepisów na podstawie profilu osobistego, alergii, preferencji i orientacyjnego limitu 2000 kcal dziennie. Nic nie zostanie zaplanowane, dopóki nie dodasz."
     },
     "why": {
       "theme": "{{label}}",
@@ -3249,7 +3252,8 @@
       "receipts": "Odczytywanie paragonów",
       "discover": "Znajdowanie przepisów",
       "reminders": "Przypomnienia o przygotowaniu",
-      "translate": "Tłumaczenie przepisów"
+      "translate": "Tłumaczenie przepisów",
+      "plan": "Planowanie posiłków przez AI"
     },
     "keys": {
       "fromEnvironment": "Ze zmiennych środowiskowych",
@@ -3449,7 +3453,8 @@
       "receipts": "paragon",
       "discover": "wyszukiwanie",
       "reminders": "dzień",
-      "translate": "przepis"
+      "translate": "przepis",
+      "plan": "plan"
     },
     "alerts": {
       "whose": {
@@ -3510,6 +3515,12 @@
         "notCovered": "Analiza zdjęć posiłków wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
         "overLimit": "Miesięczny limit AI na kluczach serwera został wykorzystany. Odnowi się w przyszłym miesiącu.",
         "ownLimit": "Miesięczny limit na własnych kluczach AI gospodarstwa domowego został osiągnięty."
+      },
+      "plan": {
+        "noKey": "Planowanie posiłków przez AI wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
+        "notCovered": "Planowanie posiłków przez AI wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
+        "overLimit": "Limit AI na kluczach serwera w tym miesiącu został wykorzystany. Odnowi się w przyszłym miesiącu.",
+        "ownLimit": "Limit własnych kluczy AI tego gospodarstwa domowego w tym miesiącu został osiągnięty."
       }
     }
   },

@@ -28,6 +28,7 @@ export const AI_TASKS = [
   "discover",
   "reminders",
   "translate",
+  "plan",
 ] as const
 export type AiTask = (typeof AI_TASKS)[number]
 
@@ -49,6 +50,7 @@ export const TASK_SIZES: Record<AiTask, ModelSize> = {
   discover: "small",
   reminders: "small",
   translate: "small",
+  plan: "large",
 }
 
 /** What a model can do, which a feature checks before it runs. */
@@ -206,6 +208,7 @@ export const TASK_USE: Record<AiTask, { input: number; output: number }> = {
   discover: { input: 1_500, output: 400 },
   reminders: { input: 1_500, output: 200 },
   translate: { input: 3_000, output: 2_500 },
+  plan: { input: 12_000, output: 1_500 },
 }
 
 /** About what one use of a task costs on a price, in US dollars. */

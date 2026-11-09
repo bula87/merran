@@ -2733,6 +2733,60 @@
                         ]
                       }
                     ]
+                  },
+                  "plan": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ok": {
+                            "type": "boolean",
+                            "enum": [
+                              true
+                            ]
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "server",
+                              "household"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ok",
+                          "ref",
+                          "source"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ok": {
+                            "type": "boolean",
+                            "enum": [
+                              false
+                            ]
+                          },
+                          "why": {
+                            "type": "string",
+                            "enum": [
+                              "noKey",
+                              "notCovered",
+                              "overLimit",
+                              "ownLimit"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ok",
+                          "why"
+                        ]
+                      }
+                    ]
                   }
                 },
                 "description": "For each task, the model and whose key, or why none."
@@ -3038,6 +3092,11 @@
                 "source": "server"
               },
               "translate": {
+                "ok": true,
+                "ref": "anthropic:claude-opus-5-5",
+                "source": "server"
+              },
+              "plan": {
                 "ok": true,
                 "ref": "anthropic:claude-opus-5-5",
                 "source": "server"
@@ -3371,6 +3430,12 @@
                 "example": "anthropic:claude-opus-5-5"
               },
               "translate": {
+                "type": "string",
+                "maxLength": 300,
+                "description": "A model: \"anthropic:claude-opus-5-5\", or on an address, \"endpoint:<its id>:llama3.1\".",
+                "example": "anthropic:claude-opus-5-5"
+              },
+              "plan": {
                 "type": "string",
                 "maxLength": 300,
                 "description": "A model: \"anthropic:claude-opus-5-5\", or on an address, \"endpoint:<its id>:llama3.1\".",
@@ -13860,7 +13925,8 @@
               "receipts",
               "discover",
               "reminders",
-              "translate"
+              "translate",
+              "plan"
             ],
             "models": [],
             "householdKeys": true,
@@ -13968,10 +14034,11 @@
                 "receipts",
                 "discover",
                 "reminders",
-                "translate"
+                "translate",
+                "plan"
               ]
             },
-            "maxItems": 11
+            "maxItems": 12
           },
           "models": {
             "type": "array",
@@ -14047,7 +14114,8 @@
             "receipts",
             "discover",
             "reminders",
-            "translate"
+            "translate",
+            "plan"
           ],
           "models": [],
           "householdKeys": true,
@@ -27377,6 +27445,70 @@
         "responses": {
           "200": {
             "description": "Ideas, in the slots' order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Suggestions"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plan/suggest/ai": {
+      "post": {
+        "operationId": "suggestMealsAi",
+        "tags": [
+          "Plan"
+        ],
+        "summary": "Suggest meals with AI",
+        "description": "Uses AI to suggest recipes for the given slots based on available recipes, household context, and your personal profile (allergies, preferences, goals). Returns the same suggestion shape as Fill the week; nothing is planned until you add it. Max calories per day is guided to 2000 kcal for now. With an API key, it needs the `plan: read` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "plan:read",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI meal ideas, in the slots' order.",
             "content": {
               "application/json": {
                 "schema": {

@@ -25,9 +25,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { formatMinutes } from "@/features/recipes/format"
 import { ApiError } from "@/lib/api/client"
 
+import { NeedsAi, useAiFor } from "@/features/ai/needs-ai"
+
 import { formatWeekday } from "./format"
 import {
   suggest,
+  suggestAi,
   useHouseholdClock,
   type Meal,
   type PlanEntry,
@@ -46,6 +49,7 @@ export function FillWeekDialog({
   days,
   entries,
   themes,
+  ai = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -53,20 +57,34 @@ export function FillWeekDialog({
   /** What's planned in the week already. */
   entries: PlanEntry[]
   themes: WeekThemes
+  /** Use AI with recipes and your personal profile to suggest meals. */
+  ai?: boolean
 }) {
   const { t } = useTranslation()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("plan.fill.title")}</DialogTitle>
-          <DialogDescription>{t("plan.fill.description")}</DialogDescription>
+          <DialogTitle>
+            {ai
+              ? t("plan.fill.aiTitle", "AI Fill the week")
+              : t("plan.fill.title")}
+          </DialogTitle>
+          <DialogDescription>
+            {ai
+              ? t(
+                  "plan.fill.aiDescription",
+                  "AI picks meals from your recipes using your personal profile, allergies, preferences, and a 2,000 kcal/day guide. Nothing is planned until you add it."
+                )
+              : t("plan.fill.description")}
+          </DialogDescription>
         </DialogHeader>
         {open && (
           <FillWeek
             days={days}
             entries={entries}
             themes={themes}
+            ai={ai}
             onDone={() => onOpenChange(false)}
           />
         )}
@@ -83,17 +101,20 @@ function FillWeek({
   days,
   entries,
   themes,
+  ai,
   onDone,
 }: {
   days: string[]
   entries: PlanEntry[]
   themes: WeekThemes
+  ai: boolean
   onDone: () => void
 }) {
   const { t, i18n } = useTranslation()
   const clock = useHouseholdClock()
   const actions = usePlanActions()
   const whyText = useWhyText()
+  const aiFor = useAiFor("plan")
   const [chosen, setChosen] = React.useState<Meal[]>(
     clock.meals.includes("dinner") ? ["dinner"] : [...clock.meals]
   )
@@ -119,10 +140,11 @@ function FillWeek({
       .map((meal) => ({ date, meal }))
       .filter((slot) => !taken.has(slotKey(slot)) && !skipNight(slot))
   )
+  const aiReady = !ai || aiFor.ready === true
   const ideas = useQuery({
-    queryKey: ["plan", "suggest", slots],
-    queryFn: () => suggest(slots),
-    enabled: slots.length > 0,
+    queryKey: ["plan", ai ? "suggest-ai" : "suggest", slots],
+    queryFn: () => (ai ? suggestAi(slots) : suggest(slots)),
+    enabled: slots.length > 0 && aiReady,
     // Fresh ideas each time it opens; the same ones while it's open.
     staleTime: Infinity,
     gcTime: 0,
@@ -149,7 +171,8 @@ function FillWeek({
       const exclude = [
         ...new Set([...rows.map((other) => other.recipe.id), ...passed]),
       ].slice(0, 200)
-      const [next] = (await suggest([row], exclude)).suggestions
+      const fetch = ai ? suggestAi : suggest
+      const [next] = (await fetch([row], exclude)).suggestions
       if (!next) {
         toast(t("plan.fill.noOther", { when: when(row) }))
         return
@@ -182,6 +205,27 @@ function FillWeek({
   if (upcoming.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">{t("plan.fill.over")}</p>
+    )
+  }
+
+  if (ai && aiFor.ready === false && aiFor.why) {
+    return (
+      <div className="grid gap-4">
+        <NeedsAi task="plan" why={aiFor.why} onNavigate={onDone} />
+        <DialogFooter>
+          <Button variant="outline" onClick={onDone}>
+            {t("plan.fill.close")}
+          </Button>
+        </DialogFooter>
+      </div>
+    )
+  }
+
+  if (ai && aiFor.ready === undefined) {
+    return (
+      <div className="flex justify-center py-8">
+        <Spinner />
+      </div>
     )
   }
 

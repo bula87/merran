@@ -1275,7 +1275,10 @@
       "added_one": "Added {{count}} meal to the plan.",
       "added_other": "Added {{count}} meals to the plan.",
       "cancel": "Cancel",
-      "close": "Close"
+      "close": "Close",
+      "aiButton": "AI Fill the week",
+      "aiTitle": "AI Fill the week",
+      "aiDescription": "AI picks meals from your recipes using your personal profile, allergies, preferences, and a 2,000 kcal/day guide. Nothing is planned until you add it."
     },
     "why": {
       "theme": "{{label}}",
@@ -2977,7 +2980,8 @@
       "receipts": "Reading receipts",
       "discover": "Finding recipes",
       "reminders": "Prep reminders",
-      "translate": "Recipe translations"
+      "translate": "Recipe translations",
+      "plan": "AI meal planning"
     },
     "keys": {
       "fromEnvironment": "From the environment",
@@ -3171,7 +3175,8 @@
       "receipts": "a receipt",
       "discover": "a search",
       "reminders": "a day",
-      "translate": "a recipe"
+      "translate": "a recipe",
+      "plan": "a plan"
     },
     "alerts": {
       "whose": {
@@ -3230,6 +3235,12 @@
       "nutrition": {
         "noKey": "Analyzing meal photos needs AI, and this household has no AI key yet.",
         "notCovered": "Analyzing meal photos needs AI, and this household has no AI key yet.",
+        "overLimit": "This month's AI on the server's keys is used up. It's back next month.",
+        "ownLimit": "This month's limit on the household's own AI keys is reached."
+      },
+      "plan": {
+        "noKey": "AI meal planning needs AI, and this household has no AI key yet.",
+        "notCovered": "AI meal planning needs AI, and this household has no AI key yet.",
         "overLimit": "This month's AI on the server's keys is used up. It's back next month.",
         "ownLimit": "This month's limit on the household's own AI keys is reached."
       }

@@ -2444,6 +2444,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plan/suggest/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suggest meals with AI
+         * @description Uses AI to suggest recipes for the given slots based on available recipes, household context, and your personal profile (allergies, preferences, goals). Returns the same suggestion shape as Fill the week; nothing is planned until you add it. Max calories per day is guided to 2000 kcal for now. With an API key, it needs the `plan: read` permission.
+         */
+        post: operations["suggestMealsAi"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plan/unmarked": {
         parameters: {
             query?: never;
@@ -6229,6 +6249,11 @@ export interface components {
          *             "ok": true,
          *             "ref": "anthropic:claude-opus-5-5",
          *             "source": "server"
+         *           },
+         *           "plan": {
+         *             "ok": true,
+         *             "ref": "anthropic:claude-opus-5-5",
+         *             "source": "server"
          *           }
          *         },
          *         "month": "2026-10",
@@ -6411,6 +6436,18 @@ export interface components {
                         why: "noKey" | "notCovered" | "overLimit" | "ownLimit";
                     };
                     translate?: {
+                        /** @enum {boolean} */
+                        ok: true;
+                        ref: string;
+                        /** @enum {string} */
+                        source: "server" | "household";
+                    } | {
+                        /** @enum {boolean} */
+                        ok: false;
+                        /** @enum {string} */
+                        why: "noKey" | "notCovered" | "overLimit" | "ownLimit";
+                    };
+                    plan?: {
                         /** @enum {boolean} */
                         ok: true;
                         ref: string;
@@ -6642,6 +6679,11 @@ export interface components {
                  * @example anthropic:claude-opus-5-5
                  */
                 translate?: string;
+                /**
+                 * @description A model: "anthropic:claude-opus-5-5", or on an address, "endpoint:<its id>:llama3.1".
+                 * @example anthropic:claude-opus-5-5
+                 */
+                plan?: string;
             };
             /** @description A monthly limit on its own keys, in US dollars; null for none. */
             monthlyLimit: number | null;
@@ -11796,7 +11838,8 @@ export interface components {
          *           "receipts",
          *           "discover",
          *           "reminders",
-         *           "translate"
+         *           "translate",
+         *           "plan"
          *         ],
          *         "models": [],
          *         "householdKeys": true,
@@ -11907,7 +11950,8 @@ export interface components {
          *         "receipts",
          *         "discover",
          *         "reminders",
-         *         "translate"
+         *         "translate",
+         *         "plan"
          *       ],
          *       "models": [],
          *       "householdKeys": true,
@@ -11926,7 +11970,7 @@ export interface components {
             limits: {
                 [key: string]: number;
             };
-            tasks: ("assistant" | "import" | "tidy" | "notes" | "swaps" | "nutrition" | "shopping" | "receipts" | "discover" | "reminders" | "translate")[];
+            tasks: ("assistant" | "import" | "tidy" | "notes" | "swaps" | "nutrition" | "shopping" | "receipts" | "discover" | "reminders" | "translate" | "plan")[];
             models: string[];
             householdKeys: boolean;
             householdAddresses: boolean;
@@ -20471,6 +20515,48 @@ export interface operations {
         };
         responses: {
             /** @description Ideas, in the slots' order. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Suggestions"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    suggestMealsAi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestRequest"];
+            };
+        };
+        responses: {
+            /** @description AI meal ideas, in the slots' order. */
             200: {
                 headers: {
                     [name: string]: unknown;

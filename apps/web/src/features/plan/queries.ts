@@ -14,6 +14,10 @@ export type PlanSlot = { date: string; meal: Meal }
 export const suggest = (slots: PlanSlot[], exclude: string[] = []) =>
   unwrap(api.POST("/api/plan/suggest", { body: { slots, exclude } }))
 
+/** Recipes for slots, chosen by AI using recipes and your personal profile. */
+export const suggestAi = (slots: PlanSlot[], exclude: string[] = []) =>
+  unwrap(api.POST("/api/plan/suggest/ai", { body: { slots, exclude } }))
+
 /** The plan from one day to another, the week's pool included. */
 export const planQuery = (from: string, to: string) =>
   queryOptions({

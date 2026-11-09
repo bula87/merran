@@ -1,4 +1,5 @@
 import {
+  AiMagicIcon,
   ArrowLeft01Icon,
   ArrowMoveUpRightIcon,
   ArrowRight01Icon,
@@ -108,6 +109,7 @@ export function PlanPage({ week: asked }: { week?: string }) {
   const [adding, setAdding] = React.useState<Slot | null>(null)
   const [moving, setMoving] = React.useState(false)
   const [filling, setFilling] = React.useState(false)
+  const [aiFilling, setAiFilling] = React.useState(false)
   const [listing, setListing] = React.useState(false)
   const [showPast, setShowPast] = React.useState(false)
 
@@ -165,14 +167,24 @@ export function PlanPage({ week: asked }: { week?: string }) {
           ) : (
             <div className="flex gap-2">
               {fillable && (
-                <Button variant="outline" onClick={() => setFilling(true)}>
-                  <HugeiconsIcon
-                    icon={MagicWand01Icon}
-                    strokeWidth={2}
-                    data-icon="inline-start"
-                  />
-                  {t("plan.fill.button")}
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => setFilling(true)}>
+                    <HugeiconsIcon
+                      icon={MagicWand01Icon}
+                      strokeWidth={2}
+                      data-icon="inline-start"
+                    />
+                    {t("plan.fill.button")}
+                  </Button>
+                  <Button variant="outline" onClick={() => setAiFilling(true)}>
+                    <HugeiconsIcon
+                      icon={AiMagicIcon}
+                      strokeWidth={2}
+                      data-icon="inline-start"
+                    />
+                    {t("plan.fill.aiButton", "AI Fill the week")}
+                  </Button>
+                </>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -193,6 +205,12 @@ export function PlanPage({ week: asked }: { week?: string }) {
                   >
                     {t("plan.selectMeals")}
                   </DropdownMenuItem>
+                  {fillable && (
+                    <DropdownMenuItem onClick={() => setAiFilling(true)}>
+                      <HugeiconsIcon icon={AiMagicIcon} strokeWidth={2} />
+                      {t("plan.fill.aiButton", "AI Fill the week")}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => void actions.repeat(week)}>
                     {t("plan.repeat")}
                   </DropdownMenuItem>
@@ -332,6 +350,14 @@ export function PlanPage({ week: asked }: { week?: string }) {
         days={days}
         entries={entries}
         themes={themes}
+      />
+      <FillWeekDialog
+        open={aiFilling}
+        onOpenChange={setAiFilling}
+        days={days}
+        entries={entries}
+        themes={themes}
+        ai
       />
       {moving && (
         <MoveMealsDialog

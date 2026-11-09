@@ -135,6 +135,7 @@ Keep this page current: when a feature is built, changed, planned or dropped, up
 | See which recipes are already planned for the week | Detail | Built | Available in alpha.4: Already planned badges in meal and side pickers for the destination week; Planned this week on recipe-library cards. Includes sides and any-day meals, counts cooked meals and excludes skipped ones ([decision](shopping-and-planning-feedback.md#see-recipes-already-planned-for-the-week)) |
 | What's next: tonight's dinner, this afternoon's lunch | Key | Built | |
 | Fill the week, re-roll, Something else | Headline | Built | No AI needed |
+| AI Fill the week from recipes and personal profile | Key | Built | AI; uses your personal profile and a 2,000 kcal/day guide; same suggestion and apply flow as Fill the week |
 | Saying why for each pick: on hand, needs using, not had lately... | Headline | Built | With the stores module, what's on sale too |
 | Tastes and rules | Key | Built | A recipe Merran can't read, like one kept in Arabic, isn't suggested to a household with allergies, and says why |
 | Leave it out: dislikes crossed off a recipe instead of ruling it out | Headline | Built | Allergies are never left to chance |
