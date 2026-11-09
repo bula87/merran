@@ -9,6 +9,7 @@ import { stores } from "./stores/index.ts"
 import type { Module } from "./module.ts"
 import { photos } from "./photos/index.ts"
 import { telemetry } from "./telemetry/index.ts"
+import { translations } from "./translations/index.ts"
 import { video } from "./video/index.ts"
 import { voice } from "./voice/index.ts"
 import { updates } from "./updates/index.ts"
@@ -22,6 +23,7 @@ export const MODULES: readonly Module[] = [
   sites,
   flaresolverr,
   photos,
+  translations,
   voice,
   stores,
   email,

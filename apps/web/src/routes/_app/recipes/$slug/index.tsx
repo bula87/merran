@@ -1,16 +1,17 @@
 import {
   AiMagicIcon,
   ArrowLeft01Icon,
+  Calendar03Icon,
   CookingPotIcon,
   Delete02Icon,
   Edit02Icon,
+  Globe02Icon,
   ImageAdd02Icon,
   ImageRemove01Icon,
   LeafIcon,
   LinkSquare02Icon,
   MoreHorizontalIcon,
   Tick02Icon,
-  Calendar03Icon,
   Time04Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -56,6 +57,7 @@ import {
 } from "@/features/recipes/ingredient-list"
 import {
   recipeQuery,
+  recipeTranslationsQuery,
   useRefreshRecipes,
   type Recipe,
 } from "@/features/recipes/queries"
@@ -76,6 +78,7 @@ import { TidyDialog } from "@/features/recipes/tidy/tidy-dialog"
 import { RecipeSuggestions } from "@/features/recipes/tidy/recipe-suggestions"
 import { VersionsDialog } from "@/features/recipes/versions-dialog"
 import { useCapability } from "@/features/capabilities/queries"
+import { useAiFor } from "@/features/ai/needs-ai"
 import { useAssistantPage } from "@/features/assistant/assistant-context"
 import { PlanItDialog } from "@/features/plan/plan-it-dialog"
 import { formatPrice, useCosts } from "@/features/stores/queries"
@@ -136,7 +139,7 @@ function RecipePage() {
 }
 
 function RecipeView({
-  recipe,
+  recipe: original,
   planned,
 }: {
   recipe: Recipe
@@ -147,6 +150,52 @@ function RecipeView({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const refresh = useRefreshRecipes()
+  const { data: translations } = useQuery(recipeTranslationsQuery(original.id))
+  const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en")
+    .toLowerCase()
+    .split("-")[0]
+  const translation = translations?.translations.find(
+    (item) => item.locale === locale
+  )
+  const recipe = React.useMemo(() => {
+    if (!translation) return original
+    const ingredients =
+      translation.ingredients.length === original.ingredients.length
+        ? original.ingredients.map((line, index) => {
+            const translatedLine = translation.ingredients[index]
+            return translatedLine
+              ? {
+                  ...line,
+                  section: translatedLine.section,
+                  text: translatedLine.text,
+                  note: translatedLine.note,
+                }
+              : line
+          })
+        : original.ingredients
+    const steps =
+      translation.steps.length === original.steps.length
+        ? original.steps.map((step, index) => {
+            const translatedStep = translation.steps[index]
+            return translatedStep
+              ? {
+                  ...step,
+                  section: translatedStep.section,
+                  text: translatedStep.text,
+                }
+              : step
+          })
+        : original.steps
+    return {
+      ...original,
+      name: translation.name,
+      description: translation.description,
+      yieldText: translation.yieldText,
+      notes: translation.notes,
+      ingredients,
+      steps,
+    }
+  }, [original, translation])
   const servings = useServings(recipe)
   const [system, setSystem] = useUnitSystem()
   const setSearch = Route.useNavigate()
@@ -204,10 +253,35 @@ function RecipeView({
   const [showVersions, setShowVersions] = React.useState(false)
   const [showDiets, setShowDiets] = React.useState(false)
   const [tidying, setTidying] = React.useState(false)
+  const [translating, setTranslating] = React.useState(false)
   const aiOn = useCapability("ai")
+  const translateAi = useAiFor("translate")
   // The assistant knows this is the recipe on screen.
   useAssistantPage({ recipe: { id: recipe.id, name: recipe.name } })
   const photo = usePhotoActions(recipe)
+
+  async function translateRecipe() {
+    setTranslating(true)
+    try {
+      await unwrap(
+        api.POST("/api/recipes/{recipe}/translate", {
+          params: { path: { recipe: recipe.id } },
+        })
+      )
+      toast.success(t("recipes.translate.started", { name: recipe.name }))
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["recipes", recipe.id] }),
+        queryClient.invalidateQueries({
+          queryKey: recipeTranslationsQuery(recipe.id).queryKey,
+        }),
+      ])
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error
+      toast.error(error.message)
+    } finally {
+      setTranslating(false)
+    }
+  }
 
   async function rate(rating: number | null) {
     const key = recipeQuery(recipe.slug).queryKey
@@ -501,6 +575,15 @@ function RecipeView({
                   <DropdownMenuItem onClick={() => setTidying(true)}>
                     <HugeiconsIcon icon={AiMagicIcon} strokeWidth={2} />
                     {t("recipes.tidy.menu")}
+                  </DropdownMenuItem>
+                )}
+                {aiOn && (
+                  <DropdownMenuItem
+                    disabled={translating || translateAi.ready === false}
+                    onClick={() => void translateRecipe()}
+                  >
+                    <HugeiconsIcon icon={Globe02Icon} strokeWidth={2} />
+                    {t("recipes.translate.menu")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => setShowVersions(true)}>

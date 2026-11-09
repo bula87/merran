@@ -476,6 +476,28 @@ How the household's AI photos look, all alike, so the library looks like one coo
 
 [Source definition](https://github.com/merran-app/merran/blob/main/apps/server/src/modules/photos/settings.ts)
 
+## recipeTranslations.enabled
+
+Translate recipes into all supported languages in the background.
+
+- **Scope:** server
+- **Type:** switch
+- **Default:** `false`
+- **Environment:** `MERRAN_RECIPE_TRANSLATIONS`
+
+[Source definition](https://github.com/merran-app/merran/blob/main/apps/server/src/modules/translations/settings.ts)
+
+## recipeTranslations.hour
+
+Hour of day (0-23, server time) to run automatic recipe translations.
+
+- **Scope:** server
+- **Type:** number
+- **Default:** `3`
+- **Environment:** `MERRAN_RECIPE_TRANSLATIONS_HOUR`
+
+[Source definition](https://github.com/merran-app/merran/blob/main/apps/server/src/modules/translations/settings.ts)
+
 ## voice.provider
 
 Who reads cook steps aloud: the device, Kokoro, or OpenAI. OpenAI requires eligible AI access and incurs provider charges. Unset: Kokoro when its address is configured, otherwise the device.

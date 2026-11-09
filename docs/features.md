@@ -87,7 +87,8 @@ Keep this page current: when a feature is built, changed, planned or dropped, up
 | Nutrition worked out from USDA data or by AI, with plan totals | Key | Built | Module: a free USDA key; AI estimates without one. Worked out by itself when a recipe's saved, and for the whole library. The foods Merran knows have their USDA food checked by hand, so they aren't searched for. Available in alpha.4: free-key signup steps and email/spam guidance in Settings |
 | What recipes cost, and a weekly budget, in any currency | Key | Built | Module (stores): each line's share of its product's price at the household's Kroger store (by weight or volume, a baking staple's density, or a can as one can), shown on recipes and cards when three in five lines have a price; the Plan page says what the week comes to against the budget, and Fill the week and the autoplan pick recipes that fit what's left of it more |
 | AI photos in a consistent style for recipes without one | Key | Built | Module, off by default; an OpenAI or Google key; four styles per household, one by itself for each new recipe, or the whole library |
-| Recipe translations, step photos, meaning-based search | Detail | Later | |
+| Recipe translations into every supported language, on a schedule or from a recipe | Detail | Built | AI; a background job at a chosen hour, and a translate action on each recipe |
+| Step photos, meaning-based search | Detail | Later | |
 
 ## Cooking
 

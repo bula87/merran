@@ -52,6 +52,7 @@ import { RecipeSite } from "./recipe_sites.ts"
 import { RecipePairing } from "./recipe_pairings.ts"
 import { RecipeStep } from "./recipe_steps.ts"
 import { RecipeTag } from "./recipe_tags.ts"
+import { RecipeTranslation } from "./recipe_translations.ts"
 import { RecipeVersion } from "./recipe_versions.ts"
 import { Recipe } from "./recipes.ts"
 import { Secret } from "./secrets.ts"
@@ -102,6 +103,7 @@ export * from "./recipe_sites.ts"
 export * from "./recipe_pairings.ts"
 export * from "./recipe_steps.ts"
 export * from "./recipe_tags.ts"
+export * from "./recipe_translations.ts"
 export * from "./recipe_versions.ts"
 export * from "./recipes.ts"
 export * from "./secrets.ts"
@@ -164,6 +166,7 @@ export const entities = [
   RecipeSite,
   RecipeStep,
   RecipeTag,
+  RecipeTranslation,
   RecipeVersion,
   Secret,
   ServerSetting,

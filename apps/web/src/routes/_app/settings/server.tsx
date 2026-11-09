@@ -19,6 +19,7 @@ import { JobsCard, serverJobsQuery } from "@/features/server/jobs-card"
 import { KrogerCard } from "@/features/server/kroger-card"
 import { NutritionCard } from "@/features/server/nutrition-card"
 import { PhotosCard } from "@/features/server/photos-card"
+import { RecipeTranslationsCard } from "@/features/server/recipe-translations-card"
 import { SitesCard } from "@/features/server/sites-card"
 import { VoiceCard } from "@/features/server/voice-card"
 import {
@@ -93,6 +94,7 @@ function ServerSettings() {
               <SitesCard />
               <FlareSolverrCard />
               <PhotosCard />
+              <RecipeTranslationsCard />
               <VoiceCard />
             </>
           ),

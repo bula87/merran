@@ -9,6 +9,7 @@ import { PHOTOS } from "./photos/settings.ts"
 import { SITES } from "./sites/settings.ts"
 import { STORE_SETTINGS } from "./stores/settings.ts"
 import { TELEMETRY } from "./telemetry/settings.ts"
+import { RECIPE_TRANSLATIONS } from "./translations/settings.ts"
 import { UPDATES } from "./updates/settings.ts"
 import { VIDEO } from "./video/settings.ts"
 import { VOICE } from "./voice/settings.ts"
@@ -27,6 +28,7 @@ export const MODULE_SETTINGS: readonly AnySetting[] = [
   ...Object.values(SITES),
   ...Object.values(FLARESOLVERR),
   ...Object.values(PHOTOS),
+  ...Object.values(RECIPE_TRANSLATIONS),
   ...Object.values(VOICE),
   ...Object.values(STORE_SETTINGS),
   ...Object.values(ERROR_TRACKING),

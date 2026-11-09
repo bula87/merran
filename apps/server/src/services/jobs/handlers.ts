@@ -12,6 +12,7 @@ import { tidyRunJob } from "../recipes/review/tidy-run.ts"
 import { nutritionRunJob } from "../nutrition/runs.ts"
 import { autoplanJob } from "../plan/autoplan.ts"
 import { readSitesJob } from "../recipes/discover/sites/read-job.ts"
+import { translateRecipesJob } from "../recipes/translations/job.ts"
 import { checkPricesJob } from "../stores/prices.ts"
 import { importJob } from "../transfer/import.ts"
 import { rekeyFoodsJob } from "../list/rekey.ts"
@@ -37,6 +38,7 @@ export const JOB_HANDLERS: readonly JobHandler[] = [
   discoverJob,
   readSitesJob,
   aiPhotoRunJob,
+  translateRecipesJob,
   checkPricesJob,
   rekeyFoodsJob,
   checkUpdatesJob,

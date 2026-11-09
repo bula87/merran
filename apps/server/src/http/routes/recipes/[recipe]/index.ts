@@ -14,6 +14,7 @@ import ratingRoutes from "./rating/index.ts"
 import standInsRoutes from "./stand-ins/index.ts"
 import swapRoutes from "./swap/index.ts"
 import tidyRoutes from "./tidy/index.ts"
+import translateRoutes from "./translate/index.ts"
 import versionsRoutes from "./versions/index.ts"
 
 export default (router: Router, deps: AppDeps) => {
@@ -31,5 +32,6 @@ export default (router: Router, deps: AppDeps) => {
   standInsRoutes(router, deps)
   swapRoutes(router, deps)
   tidyRoutes(router, deps)
+  translateRoutes(router, deps)
   versionsRoutes(router, deps)
 }
