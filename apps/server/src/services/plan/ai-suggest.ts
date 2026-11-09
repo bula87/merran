@@ -181,6 +181,8 @@ const AiPlan = z.object({
   suggestions: z.array(AiPick).max(56),
 })
 
+export type AiSuggestStatus = "requesting_large_model" | "fallback_small_model"
+
 export async function aiSuggestMeals(
   deps: AiDeps,
   em: EntityManager,
@@ -192,6 +194,8 @@ export async function aiSuggestMeals(
     profile: UserProfile
     /** Maximum calories per day (guidance). */
     maxCaloriesPerDay?: number
+    /** Progress updates for long-running AI requests (e.g. model fallback). */
+    onStatus?: (status: AiSuggestStatus) => void | Promise<void>
   }
 ): Promise<Suggestion[]> {
   if (options.slots.length === 0) return []
@@ -385,7 +389,9 @@ export async function aiSuggestMeals(
   }
 
   let output: z.infer<typeof AiPlan>
+  const onStatus = options.onStatus
   try {
+    await onStatus?.("requesting_large_model")
     output = await run()
   } catch (error) {
     if (!shouldFallback(error)) throw error
@@ -393,6 +399,7 @@ export async function aiSuggestMeals(
       { err: error, task: "plan" },
       "AI plan failed, trying small model"
     )
+    await onStatus?.("fallback_small_model")
     try {
       const small = await resolveTask(deps, em, options.householdId, "swaps", 0)
       if (small.ok) {

@@ -1316,7 +1316,12 @@
       "close": "Zamknij",
       "aiButton": "Wypełnij tydzień AI",
       "aiTitle": "Wypełnij tydzień AI",
-      "aiDescription": "AI dobiera posiłki z Twoich przepisów na podstawie profilu osobistego, alergii, preferencji i orientacyjnego limitu 2000 kcal dziennie. Nic nie zostanie zaplanowane, dopóki nie dodasz."
+      "aiDescription": "AI dobiera posiłki z Twoich przepisów na podstawie profilu osobistego, alergii, preferencji i orientacyjnego limitu 2000 kcal dziennie. Nic nie zostanie zaplanowane, dopóki nie dodasz.",
+      "status": {
+        "processing": "Przetwarzanie...",
+        "requestingLarge": "Wysyłanie zapytania do dużego modelu...",
+        "fallbackSmall": "Przełączanie na mały model..."
+      }
     },
     "why": {
       "theme": "{{label}}",

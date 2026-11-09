@@ -33,6 +33,7 @@ import {
   suggest,
   suggestAi,
   useHouseholdClock,
+  type AiSuggestStatus,
   type Meal,
   type PlanEntry,
   type PlanSlot,
@@ -144,6 +145,7 @@ function FillWeek({
   const [passed, setPassed] = React.useState<string[]>([])
   const [rolling, setRolling] = React.useState<string | null>(null)
   const [adding, setAdding] = React.useState(false)
+  const [aiStatus, setAiStatus] = React.useState<AiSuggestStatus | null>(null)
 
   const upcoming = days.filter((day) => day >= clock.today)
   const taken = new Set(
@@ -170,7 +172,15 @@ function FillWeek({
   const aiReady = !ai || aiFor.ready === true
   const ideas = useQuery({
     queryKey: ["plan", ai ? "suggest-ai" : "suggest", querySlots],
-    queryFn: () => (ai ? suggestAi(querySlots) : suggest(querySlots)),
+    queryFn: async () => {
+      if (!ai) return suggest(querySlots)
+      setAiStatus(null)
+      try {
+        return await suggestAi(querySlots, [], (status) => setAiStatus(status))
+      } finally {
+        setAiStatus(null)
+      }
+    },
     enabled: querySlots.length > 0 && aiReady,
     // Fresh ideas each time it opens; the same ones while it's open.
     staleTime: Infinity,
@@ -195,12 +205,15 @@ function FillWeek({
 
   async function reroll(row: (typeof rows)[number]) {
     setRolling(row.key)
+    if (ai) setAiStatus(null)
     try {
       const exclude = [
         ...new Set([...rows.map((other) => other.recipe.id), ...passed]),
       ].slice(0, 200)
-      const fetch = ai ? suggestAi : suggest
-      const [next] = (await fetch([row], exclude)).suggestions
+      const result = ai
+        ? await suggestAi([row], exclude, (status) => setAiStatus(status))
+        : await suggest([row], exclude)
+      const [next] = result.suggestions
       if (!next) {
         toast(t("plan.fill.noOther", { when: when(row) }))
         return
@@ -212,6 +225,7 @@ function FillWeek({
       toast.error(err.message)
     } finally {
       setRolling(null)
+      if (ai) setAiStatus(null)
     }
   }
 
@@ -277,6 +291,21 @@ function FillWeek({
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+      )}
+
+      {ai && (ideas.isFetching || rolling !== null) && (
+        <div
+          className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner className="size-4 shrink-0" />
+          <span>
+            {aiStatus === "fallback_small_model"
+              ? t("plan.fill.status.fallbackSmall")
+              : t("plan.fill.status.requestingLarge")}
+          </span>
+        </div>
       )}
 
       {slots.length === 0 ? (

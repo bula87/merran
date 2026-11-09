@@ -27515,7 +27515,7 @@
           "Plan"
         ],
         "summary": "Suggest meals with AI",
-        "description": "Uses AI to suggest recipes for the given slots based on available recipes, household context, and your personal profile (allergies, preferences, goals). Returns the same suggestion shape as Fill the week; nothing is planned until you add it. Max calories per day is guided to 2000 kcal for now. With an API key, it needs the `plan: read` permission.",
+        "description": "Uses AI to suggest recipes for the given slots based on available recipes, household context, and your personal profile (allergies, preferences, goals). Streams progress/status events and a final result with the same suggestion shape as Fill the week; nothing is planned until you add it. Max calories per day is guided to 2000 kcal for now. With an API key, it needs the `plan: read` permission.",
         "security": [
           {
             "session": []
@@ -27540,11 +27540,11 @@
         },
         "responses": {
           "200": {
-            "description": "AI meal ideas, in the slots' order.",
+            "description": "Server-sent events: `status` (`{\"status\":\"requesting_large_model\"|\"fallback_small_model\"}`), `result` (`{\"suggestions\":[...]}`), or `error` (`{\"code\",\"message\",\"fields\"}`).",
             "content": {
-              "application/json": {
+              "text/event-stream": {
                 "schema": {
-                  "$ref": "#/components/schemas/Suggestions"
+                  "type": "string"
                 }
               }
             }

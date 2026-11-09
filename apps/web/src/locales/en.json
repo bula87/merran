@@ -1284,7 +1284,12 @@
       "close": "Close",
       "aiButton": "AI Fill the week",
       "aiTitle": "AI Fill the week",
-      "aiDescription": "AI picks meals from your recipes using your personal profile, allergies, preferences, and a 2,000 kcal/day guide. Nothing is planned until you add it."
+      "aiDescription": "AI picks meals from your recipes using your personal profile, allergies, preferences, and a 2,000 kcal/day guide. Nothing is planned until you add it.",
+      "status": {
+        "processing": "Processing...",
+        "requestingLarge": "Requesting large model...",
+        "fallbackSmall": "Falling back to small model..."
+      }
     },
     "why": {
       "theme": "{{label}}",
