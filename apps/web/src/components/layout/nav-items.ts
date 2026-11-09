@@ -4,6 +4,7 @@ import {
   CookBookIcon,
   FridgeIcon,
   Home01Icon,
+  Restaurant01Icon,
   ShoppingBasket01Icon,
 } from "@hugeicons/core-free-icons"
 
@@ -12,6 +13,7 @@ export const PRIMARY_NAV = [
   { to: "/", labelKey: "nav.today", icon: Home01Icon },
   { to: "/recipes", labelKey: "nav.recipes", icon: CookBookIcon },
   { to: "/photo", labelKey: "nav.photo", icon: Camera01Icon },
+  { to: "/meals", labelKey: "nav.mealsLog", icon: Restaurant01Icon },
   { to: "/plan", labelKey: "nav.plan", icon: Calendar03Icon },
   { to: "/list", labelKey: "nav.list", icon: ShoppingBasket01Icon },
   { to: "/pantry", labelKey: "nav.pantry", icon: FridgeIcon },

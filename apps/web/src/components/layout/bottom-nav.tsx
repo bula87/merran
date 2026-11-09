@@ -19,7 +19,7 @@ export function BottomNav() {
       aria-label={t("nav.main")}
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <ul className="grid grid-cols-6">
+      <ul className="grid grid-cols-7">
         {PRIMARY_NAV.map((item) => {
           const active = isSectionActive(item.to, pathname)
           return (

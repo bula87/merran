@@ -7,6 +7,7 @@
     "today": "Today",
     "recipes": "Recipes",
     "photo": "Photo",
+    "mealsLog": "Meals",
     "plan": "Plan",
     "list": "List",
     "pantry": "Pantry",
@@ -1904,11 +1905,28 @@
     "log": {
       "title": "Add to meal & nutrition log",
       "description": "Save this meal to your daily food and nutrition tracking.",
-      "action": "Coming soon",
-      "soon": "Meal and nutrition tracking is coming in a future update."
+      "action": "Add to log",
+      "analyzeFirst": "Analyze the meal first, then add it to your log.",
+      "added": "Added to your meal log.",
+      "adding": "Adding…",
+      "accept": "Add to meal log",
+      "reject": "Not now"
     },
     "noPhoto": "Choose or take a photo first.",
     "error": "Something went wrong. Try again."
+  },
+  "mealsLog": {
+    "title": "Meals log",
+    "description": "Meals you've logged, with estimated nutrition.",
+    "emptyTitle": "No meals logged yet",
+    "emptyDescription": "Analyze a meal photo or add a cooked recipe to your log.",
+    "delete": "Delete meal log",
+    "deleted": "Meal log deleted.",
+    "fromPhoto": "From photo",
+    "fromRecipe": "From recipe",
+    "addFromRecipe": "Add to meal log",
+    "addedFromRecipe": "Added to your meal log.",
+    "addFromRecipeHint": "Log this meal with its nutrition."
   },
   "cook": {
     "exit": "Exit",

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import * as React from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -17,8 +17,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Toggle } from "@/components/ui/toggle"
+import { mealLogsQuery } from "@/features/meals/queries"
 import { CookNoteForm } from "@/features/recipes/cook-notes"
-import { recipeQuery } from "@/features/recipes/queries"
+import { recipeQuery, type Recipe } from "@/features/recipes/queries"
 import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client"
 
 /**
@@ -76,7 +77,7 @@ export function AfterCookingDialog({
   const known = asking?.recipe.rating !== undefined
   const full = useQuery({
     ...recipeQuery(asking?.recipe.slug ?? ""),
-    enabled: asking !== null && !known,
+    enabled: asking !== null,
   })
   const rating = known
     ? (asking?.recipe.rating ?? null)
@@ -106,6 +107,12 @@ export function AfterCookingDialog({
                 })}
               </DialogDescription>
             </DialogHeader>
+            <div className="flex flex-wrap gap-2">
+              <LogRecipeMealButton
+                recipe={full.data ?? null}
+                asking={asking.recipe}
+              />
+            </div>
             {(known || !full.isPending) && (
               <CookNoteForm
                 recipe={{ ...asking.recipe, rating }}
@@ -281,4 +288,64 @@ function useRanOut() {
       return false
     }
   }
+}
+
+function LogRecipeMealButton({
+  recipe,
+  asking,
+}: {
+  recipe: Recipe | null
+  asking: CookedRecipe
+}) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [logged, setLogged] = React.useState(false)
+  const add = useMutation({
+    mutationFn: async () => {
+      const r = recipe?.id === asking.id ? recipe : null
+      const n = r?.nutrition ?? null
+      return unwrap(
+        api.POST("/api/meal-logs", {
+          body: {
+            name: asking.name,
+            serving:
+              r?.servings != null
+                ? `${r.servings} serving${r.servings === 1 ? "" : "s"}`
+                : null,
+            servings: r?.servings ?? null,
+            source: "recipe",
+            recipeId: asking.id,
+            calories: n?.calories ?? null,
+            protein: n?.protein ?? null,
+            carbs: n?.carbs ?? null,
+            fat: n?.fat ?? null,
+            fiber: n?.fiber ?? null,
+            sugar: n?.sugar ?? null,
+            sodium: n?.sodium ?? null,
+          },
+        })
+      )
+    },
+    onSuccess: async () => {
+      setLogged(true)
+      await queryClient.invalidateQueries({ queryKey: mealLogsQuery.queryKey })
+      toast.success(t("mealsLog.addedFromRecipe"))
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? error.message : t("photo.error"))
+    },
+  })
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={add.isPending || logged}
+      onClick={() => add.mutate()}
+    >
+      {add.isPending && <Spinner data-icon="inline-start" />}
+      {logged ? t("mealsLog.addedFromRecipe") : t("mealsLog.addFromRecipe")}
+    </Button>
+  )
 }

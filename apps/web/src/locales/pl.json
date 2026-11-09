@@ -7,6 +7,7 @@
     "today": "Dzisiaj",
     "recipes": "Przepisy",
     "photo": "Zdjęcie",
+    "mealsLog": "Posiłki",
     "plan": "Plan",
     "list": "Lista",
     "pantry": "Spiżarnia",
@@ -2032,11 +2033,28 @@
     "log": {
       "title": "Dodaj do dziennika posiłków i odżywiania",
       "description": "Zapisz ten posiłek w dziennym śledzeniu jedzenia i wartości odżywczych.",
-      "action": "Wkrótce",
-      "soon": "Śledzenie posiłków i odżywiania pojawi się w przyszłej aktualizacji."
+      "action": "Dodaj do dziennika",
+      "analyzeFirst": "Najpierw przeanalizuj posiłek, a potem dodaj go do dziennika.",
+      "added": "Dodano do dziennika posiłków.",
+      "adding": "Dodawanie…",
+      "accept": "Dodaj do dziennika",
+      "reject": "Nie teraz"
     },
     "noPhoto": "Najpierw wybierz lub zrób zdjęcie.",
     "error": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "mealsLog": {
+    "title": "Dziennik posiłków",
+    "description": "Posiłki, które zapisałeś, z szacowanymi wartościami odżywczymi.",
+    "emptyTitle": "Brak zapisanych posiłków",
+    "emptyDescription": "Przeanalizuj zdjęcie posiłku lub dodaj ugotowany przepis do dziennika.",
+    "delete": "Usuń wpis",
+    "deleted": "Usunięto wpis z dziennika.",
+    "fromPhoto": "Ze zdjęcia",
+    "fromRecipe": "Z przepisu",
+    "addFromRecipe": "Dodaj do dziennika",
+    "addedFromRecipe": "Dodano do dziennika posiłków.",
+    "addFromRecipeHint": "Zapisz ten posiłek z jego wartościami odżywczymi."
   },
   "cook": {
     "exit": "Wyjdź",

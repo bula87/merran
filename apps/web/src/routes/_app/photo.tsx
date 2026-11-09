@@ -7,12 +7,13 @@ import {
   NoteAddIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import * as React from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/page-header"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -22,10 +23,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { FieldError } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
 import { useCanTakePhoto } from "@/features/assistant/attachments"
 import { NeedsAi, useAiFor } from "@/features/ai/needs-ai"
+import { mealLogsQuery } from "@/features/meals/queries"
 import { ApiError, api, unwrap } from "@/lib/api/client"
 import { shrinkPhoto } from "@/lib/shrink-photo"
 
@@ -53,6 +63,7 @@ type Analysis = {
 function PhotoPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const importAi = useAiFor("import")
   const nutritionAi = useAiFor("nutrition")
   const canTakePhoto = useCanTakePhoto()
@@ -66,6 +77,37 @@ function PhotoPage() {
   const [analyzeBusy, setAnalyzeBusy] = React.useState(false)
   const [analyzeError, setAnalyzeError] = React.useState<string | null>(null)
   const [analysis, setAnalysis] = React.useState<Analysis | null>(null)
+  const [logOpen, setLogOpen] = React.useState(false)
+
+  const addLog = useMutation({
+    mutationFn: (value: Analysis) =>
+      unwrap(
+        api.POST("/api/meal-logs", {
+          body: {
+            name: value.name || t("photo.analyze.result"),
+            serving: value.serving,
+            source: "photo",
+            confidence: value.confidence,
+            notes: value.notes,
+            calories: value.calories ?? null,
+            protein: value.protein ?? null,
+            carbs: value.carbs ?? null,
+            fat: value.fat ?? null,
+            fiber: value.fiber ?? null,
+            sugar: value.sugar ?? null,
+            sodium: value.sodium ?? null,
+          },
+        })
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: mealLogsQuery.queryKey })
+      setLogOpen(false)
+      toast.success(t("photo.log.added"))
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? error.message : t("photo.error"))
+    },
+  })
 
   React.useEffect(() => {
     return () => {
@@ -77,6 +119,7 @@ function PhotoPage() {
     setRecipeError(null)
     setAnalyzeError(null)
     setAnalysis(null)
+    setLogOpen(false)
   }
 
   function pick(next: File | undefined) {
@@ -106,7 +149,7 @@ function PhotoPage() {
     }
     setRecipeBusy(true)
     setRecipeError(null)
-    setAnalysis(null)
+    setLogOpen(false)
     try {
       const blob = await shrinkPhoto(file, MAX_SIDE)
       const form = new FormData()
@@ -131,7 +174,6 @@ function PhotoPage() {
     }
     setAnalyzeBusy(true)
     setAnalyzeError(null)
-    setAnalysis(null)
     try {
       const blob = await shrinkPhoto(file, MAX_SIDE)
       const form = new FormData()
@@ -142,11 +184,17 @@ function PhotoPage() {
         })
       )
       setAnalysis(data as Analysis)
+      setLogOpen(true)
     } catch (err) {
       setAnalyzeError(err instanceof ApiError ? err.message : t("photo.error"))
     } finally {
       setAnalyzeBusy(false)
     }
+  }
+
+  function openLog() {
+    if (analysis) setLogOpen(true)
+    else setAnalyzeError(t("photo.log.analyzeFirst"))
   }
 
   return (
@@ -301,13 +349,22 @@ function PhotoPage() {
                 <NeedsAi task="nutrition" why={nutritionAi.why} />
               )}
               {analyzeError && <FieldError>{analyzeError}</FieldError>}
-              {analysis && <MealAnalysis analysis={analysis} />}
+              {analysis && !logOpen && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLogOpen(true)}
+                >
+                  {t("photo.log.accept")}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="opacity-80">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-muted-foreground">
+              <CardTitle className="flex items-center gap-2">
                 <HugeiconsIcon
                   icon={NoteAddIcon}
                   strokeWidth={2}
@@ -317,19 +374,62 @@ function PhotoPage() {
               </CardTitle>
               <CardDescription>{t("photo.log.description")}</CardDescription>
               <CardAction>
-                <Button type="button" variant="outline" disabled>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!file || analyzeBusy}
+                  onClick={openLog}
+                >
                   {t("photo.log.action")}
                 </Button>
               </CardAction>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {t("photo.log.soon")}
-              </p>
+              {!analysis && (
+                <p className="text-sm text-muted-foreground">
+                  {t("photo.log.analyzeFirst")}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      <Dialog open={logOpen && analysis != null} onOpenChange={setLogOpen}>
+        <DialogContent className="sm:max-w-md">
+          {analysis && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {analysis.name || t("photo.analyze.result")}
+                </DialogTitle>
+                <DialogDescription>
+                  {t("photo.analyze.disclaimer")}
+                </DialogDescription>
+              </DialogHeader>
+              <MealAnalysisBody analysis={analysis} />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setLogOpen(false)}
+                  disabled={addLog.isPending}
+                >
+                  {t("photo.log.reject")}
+                </Button>
+                <Button
+                  disabled={addLog.isPending}
+                  onClick={() => addLog.mutate(analysis)}
+                >
+                  {addLog.isPending && <Spinner data-icon="inline-start" />}
+                  {addLog.isPending
+                    ? t("photo.log.adding")
+                    : t("photo.log.accept")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -354,71 +454,68 @@ function NutrientRow({
   )
 }
 
-function MealAnalysis({ analysis }: { analysis: Analysis }) {
+function MealAnalysisBody({ analysis }: { analysis: Analysis }) {
   const { t } = useTranslation()
   return (
-    <Alert>
-      <HugeiconsIcon icon={ChartHistogramIcon} strokeWidth={2} />
-      <AlertTitle>{analysis.name || t("photo.analyze.result")}</AlertTitle>
-      <AlertDescription className="space-y-3">
-        {analysis.description && <p>{analysis.description}</p>}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {analysis.serving && (
-            <span>
-              {t("photo.analyze.perServing", { serving: analysis.serving })}
-            </span>
-          )}
-          {analysis.confidence && (
-            <span>{t(`photo.analyze.confidence.${analysis.confidence}`)}</span>
-          )}
-        </div>
-        <div className="divide-y rounded-md border bg-background/60 px-3">
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.calories")}
-            value={analysis.calories}
-            unit="kcal"
-          />
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.protein")}
-            value={analysis.protein}
-            unit="g"
-          />
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.carbs")}
-            value={analysis.carbs}
-            unit="g"
-          />
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.fat")}
-            value={analysis.fat}
-            unit="g"
-          />
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.fiber")}
-            value={analysis.fiber}
-            unit="g"
-          />
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.sugar")}
-            value={analysis.sugar}
-            unit="g"
-          />
-          <NutrientRow
-            label={t("recipes.nutrition.nutrients.sodium")}
-            value={analysis.sodium}
-            unit="mg"
-          />
-        </div>
-        {analysis.notes && (
-          <p className="text-sm">
-            <span className="font-medium">{t("photo.analyze.notes")}: </span>
-            {analysis.notes}
-          </p>
+    <div className="space-y-3">
+      {analysis.description && (
+        <p className="text-sm">{analysis.description}</p>
+      )}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        {analysis.serving && (
+          <span>
+            {t("photo.analyze.perServing", { serving: analysis.serving })}
+          </span>
         )}
-        <p className="text-xs text-muted-foreground">
-          {t("photo.analyze.disclaimer")}
+        {analysis.confidence && (
+          <span>{t(`photo.analyze.confidence.${analysis.confidence}`)}</span>
+        )}
+      </div>
+      <div className="divide-y rounded-md border px-3">
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.calories")}
+          value={analysis.calories}
+          unit="kcal"
+        />
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.protein")}
+          value={analysis.protein}
+          unit="g"
+        />
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.carbs")}
+          value={analysis.carbs}
+          unit="g"
+        />
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.fat")}
+          value={analysis.fat}
+          unit="g"
+        />
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.fiber")}
+          value={analysis.fiber}
+          unit="g"
+        />
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.sugar")}
+          value={analysis.sugar}
+          unit="g"
+        />
+        <NutrientRow
+          label={t("recipes.nutrition.nutrients.sodium")}
+          value={analysis.sodium}
+          unit="mg"
+        />
+      </div>
+      {analysis.notes && (
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {t("photo.analyze.notes")}:{" "}
+          </span>
+          {analysis.notes}
         </p>
-      </AlertDescription>
-    </Alert>
+      )}
+    </div>
   )
 }
