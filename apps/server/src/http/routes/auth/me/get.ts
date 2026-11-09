@@ -3,6 +3,7 @@ import type { AppDeps } from "../../../../core/context.ts"
 import { signedIn } from "../../../middleware/auth.ts"
 import type { Router } from "../../../router.ts"
 import { describeMe, MeSchema } from "../../../schemas/auth.ts"
+import { User } from "../../../../database/entities/index.ts"
 import {
   errorResponse,
   jsonResponse,
@@ -27,9 +28,17 @@ const route = createRoute({
 export default (router: Router, _deps: AppDeps) => {
   router.openapi(route, async (c) => {
     const { user } = signedIn(c, true)
+    const person = await c.var.em.findOneOrFail(User, user.id, {
+      fields: ["preferences"],
+    })
     return c.json(
       {
-        ...(await describeMe(c.var.em, user, c.var.household?.id ?? null)),
+        ...(await describeMe(
+          c.var.em,
+          user,
+          c.var.household?.id ?? null,
+          person.preferences ?? null
+        )),
         requiresTwoFactor: c.var.requiresTwoFactor,
       },
       200

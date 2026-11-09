@@ -42,6 +42,8 @@ export const MeSchema = z
     ),
     /** The household in use on this device. */
     activeHouseholdId: z.string().nullable(),
+    /** The language the person chose for the UI; null means the browser's. */
+    language: z.string().nullable(),
   })
   .openapi("Me", { example: ME })
 
@@ -57,7 +59,8 @@ export async function describeMe(
     role?: string | null
     twoFactorEnabled?: boolean
   },
-  activeHouseholdId: string | null
+  activeHouseholdId: string | null,
+  preferences: { language?: string | null } | null
 ): Promise<Me> {
   const memberships = await membershipsOf(em, user.id)
   const households = memberships.map((member) => ({
@@ -77,6 +80,7 @@ export async function describeMe(
     activeHouseholdId: households.some((h) => h.id === activeHouseholdId)
       ? activeHouseholdId
       : (households[0]?.id ?? null),
+    language: preferences?.language ?? null,
   }
 }
 

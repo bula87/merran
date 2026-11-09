@@ -10,6 +10,7 @@ import { TwoFactorCard } from "@/features/account/two-factor-card"
 import { SsoCard } from "@/features/account/sso-card"
 import { ConnectedAppsCard } from "@/features/account/connected-apps-card"
 import { ProfileCard } from "@/features/account/profile-card"
+import { LanguageCard } from "@/features/account/language-card"
 import { apiKeysQuery } from "@/features/account/queries"
 import { InstallCard } from "@/features/install/install-ui"
 import { SettingsPage } from "@/features/settings/settings-page"
@@ -34,6 +35,7 @@ function YouSettings() {
             <>
               <ProfileCard />
               <AppearanceCard />
+              <LanguageCard />
             </>
           ),
         },

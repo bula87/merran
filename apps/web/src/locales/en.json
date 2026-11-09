@@ -254,6 +254,17 @@
         "data": {
           "title": "Your data",
           "description": "Download a copy of your account data."
+        },
+        "language": {
+          "title": "Language",
+          "description": "The language Merran uses in the app.",
+          "label": "Language",
+          "english": "English",
+          "french": "French",
+          "spanish": "Spanish",
+          "german": "German",
+          "saved": "Saved.",
+          "polish": "Polish"
         }
       },
       "profile": {
@@ -794,6 +805,7 @@
           "telemetry": "Sending the daily summary",
           "readSites": "Reading recipe sites",
           "photos": "Making AI photos",
+          "translateRecipes": "Translating recipes",
           "prices": "Checking store prices and sales"
         }
       },
@@ -867,6 +879,15 @@
         "enabledHint": "Households with an OpenAI or Google key can make them, and make them for their whole library.",
         "auto": "For each new recipe",
         "autoHint": "One made by itself for a recipe added without a photo: typed in, read from text, or from the assistant. Never for a library moved in at once."
+      },
+      "recipeTranslations": {
+        "title": "Recipe translations",
+        "description": "Translate recipes into the languages Merran supports, in the background. Recipes that are still missing translations are translated on the schedule below, and anyone can translate a recipe from its page.",
+        "enabled": "Translate recipes automatically",
+        "enabledHint": "Each recipe is translated into every language Merran supports.",
+        "hour": "Run at",
+        "hourHint": "The hour of day, in the server's time (0–23).",
+        "saved": "Saved."
       },
       "voice": {
         "title": "Voice",
@@ -1645,6 +1666,19 @@
       "unread": "Merran can't read this recipe's ingredients, so it can't check them for {{foods}}. It isn't suggested.",
       "line": "left out",
       "lineFor": "left out for {{who}}"
+    },
+    "translate": {
+      "menu": "Translate",
+      "title": "Translate {{name}}",
+      "description": "Translates this recipe into every language Merran supports. This runs in the background and uses the translation model.",
+      "started": "Translating {{name}}. Check back in a moment.",
+      "done": "{{name}} is translated.",
+      "status": {
+        "complete": "Translated into every supported language.",
+        "partial": "Translated into {{count}} of {{total}} languages.",
+        "none": "Not translated yet.",
+        "missing": "Missing: {{locales}}."
+      }
     },
     "tidy": {
       "menu": "Tidy up",
@@ -2777,7 +2811,8 @@
       "shopping": "Picking store products",
       "receipts": "Reading receipts",
       "discover": "Finding recipes",
-      "reminders": "Prep reminders"
+      "reminders": "Prep reminders",
+      "translate": "Recipe translations"
     },
     "keys": {
       "fromEnvironment": "From the environment",
@@ -2846,11 +2881,14 @@
     "models": {
       "large": "Model for big tasks",
       "small": "Model for small tasks",
-      "sizesHint": "Big tasks read pages and hold conversations; small ones match ingredients and pick products, where a cheap model does as well.",
+      "image": "Model for image processing",
+      "translation": "Model for translations",
+      "sizesHint": "Big tasks read pages and hold conversations; small ones match ingredients and pick products. Image processing and translation use the models you choose here.",
       "default": "Suggested for your keys",
       "keyDefault": "Suggested for each key",
       "largeDefault": "As for big tasks",
       "smallDefault": "As for small tasks",
+      "translationDefault": "As for translations",
       "perTask": "A model for each task",
       "priced": "{{name}} · {{input}} in, {{output}} out a million tokens",
       "gone": "{{ref}} (no key for it now)",
@@ -2967,7 +3005,8 @@
       "shopping": "an item",
       "receipts": "a receipt",
       "discover": "a search",
-      "reminders": "a day"
+      "reminders": "a day",
+      "translate": "a recipe"
     },
     "alerts": {
       "whose": {
@@ -3014,6 +3053,12 @@
       "receipts": {
         "noKey": "Reading receipts needs AI, and this household has no AI key yet.",
         "notCovered": "Reading receipts needs AI, and this household has no AI key yet.",
+        "overLimit": "This month's AI on the server's keys is used up. It's back next month.",
+        "ownLimit": "This month's limit on the household's own AI keys is reached."
+      },
+      "translate": {
+        "noKey": "Translating recipes needs AI, and this household has no AI key yet.",
+        "notCovered": "Translating recipes needs AI, and this household has no AI key yet.",
         "overLimit": "This month's AI on the server's keys is used up. It's back next month.",
         "ownLimit": "This month's limit on the household's own AI keys is reached."
       }
