@@ -81,17 +81,27 @@ const TELLING: readonly Unavailable[] = [
   "noKey",
 ]
 
+function slotOf(task: AiTask, ai: HouseholdAi): ModelRef | null {
+  if (task === "translate") return ai.translation
+  return ai[TASK_SIZES[task]]
+}
+
+function policySlotOf(task: AiTask, policy: AiPolicy): ModelRef | null {
+  if (task === "translate") return policy.translation
+  return policy[TASK_SIZES[task]]
+}
+
 export function resolveAi(input: ResolveInput): Resolution {
   const { task, household, server, policy } = input
   const estimate = input.estimate ?? 0
   const size = TASK_SIZES[task]
-  const picked = household.ai.tasks[task] ?? household.ai[size]
+  const picked = household.ai.tasks[task] ?? slotOf(task, household.ai)
   // Nothing picked: the household's own keys first, then the server's.
   const candidates = picked
     ? [picked]
     : [
         ...household.keys.map((key) => defaultRef(key, size)),
-        policy[size],
+        policySlotOf(task, policy),
         ...server.keys.map((key) => defaultRef(key, size)),
       ]
   const refs = [

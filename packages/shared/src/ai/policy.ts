@@ -35,6 +35,10 @@ export type AiPolicy = {
   /** The models households use when they haven't picked, on the server's keys. */
   large: ModelRef | null
   small: ModelRef | null
+  /** Default model for image processing tasks, on the server's keys. */
+  image: ModelRef | null
+  /** Default model for translation tasks, on the server's keys. */
+  translation: ModelRef | null
 }
 
 /**
@@ -52,6 +56,8 @@ export const DEFAULT_AI_POLICY: AiPolicy = {
   householdAddresses: false,
   large: null,
   small: null,
+  image: null,
+  translation: null,
 }
 
 /** What a household picks for itself, in Settings → Household → AI. */
@@ -59,6 +65,10 @@ export type HouseholdAi = {
   /** Its models for big and small tasks; null to go by its keys, or the server's. */
   large: ModelRef | null
   small: ModelRef | null
+  /** Model for image processing; null to go by its keys, or the server's. */
+  image: ModelRef | null
+  /** Model for translations; null to go by its keys, or the server's. */
+  translation: ModelRef | null
   /** A model for a task of its own. */
   tasks: Partial<Record<AiTask, ModelRef>>
   /** A monthly limit on its own keys, in US dollars; null for none. */
@@ -70,6 +80,8 @@ export type HouseholdAi = {
 export const NO_HOUSEHOLD_AI: HouseholdAi = {
   large: null,
   small: null,
+  image: null,
+  translation: null,
   tasks: {},
   monthlyLimit: null,
   autoTidy: false,
