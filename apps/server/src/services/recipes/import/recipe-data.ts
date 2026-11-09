@@ -448,8 +448,15 @@ export function readRecipeData(
   const card = readRecipeCard($, name)
   const { servings, yieldText } = parseYield(node.recipeYield)
   const nutrition = siteNutrition(node.nutrition)
+  const metaDescription =
+    $('meta[name="description"]').attr("content")?.trim() ||
+    $('meta[property="og:description"]').attr("content")?.trim() ||
+    $('meta[name="twitter:description"]').attr("content")?.trim() ||
+    ""
   const description = tidyDescription(
-    card?.summary.length ? card.summary.join(" ") : cleanText(node.description)
+    card?.summary.length
+      ? card.summary.join(" ")
+      : cleanText(node.description) || cleanText(metaDescription)
   )
   const notes = card?.notes.join("\n\n") ?? ""
   const prepMinutes = parseDuration(node.prepTime)

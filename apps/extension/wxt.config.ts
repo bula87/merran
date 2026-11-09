@@ -24,10 +24,11 @@ export default defineConfig({
       "activeTab",
       "scripting",
       "storage",
+      "tabs",
       "contextMenus",
       ...(browser === "firefox" ? [] : ["sidePanel"]),
     ],
-    // Only the address of the person's own Merran, asked for when they connect.
+    // The person's own Merran, and recipe sites when batch-importing pages.
     optional_host_permissions: ["https://*/*", "http://*/*"],
     ...(browser === "firefox"
       ? {

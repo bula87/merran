@@ -70,6 +70,17 @@ Structured recipe data can import without AI. If the page has no usable recipe d
 
 You can also right-click a page or link to import it, or select shopping text such as `2 lemons` and use Merran's context-menu action. Importing the open page supplies its readable content; importing a link can still require the server to retrieve the destination.
 
+## Batch import (not in 0.1.0-alpha.1 yet)
+
+On a page that lists recipe links, such as a recipe index, the toolbar popup can scan the page, let you choose links, and import them one by one into the current household.
+
+1. Open the listing page and let it load.
+2. Open the Merran popup and choose **Batch import** → **Scan this page for recipe links**.
+3. Review the found links, filter or deselect any you don't want, then choose **Import selected**.
+4. Allow the browser's permission request to read the selected recipe sites. Each recipe page opens in the background, is read as your browser shows it, and is added through Merran. You can close the popup; use **Stop** to end the batch early.
+
+**Expected result:** Progress shows added, already in the library, and failed items. Large batches take time because pages are processed one at a time. Sites that need [configured AI](../../run/ai-setup/) for pages without recipe data use your household's import AI. A background batch may stop if the browser suspends the extension during a very long run; import the remaining links again if needed.
+
 ## Shop beside a store page
 
 1. Open the toolbar popup and choose **Shopping list**.
@@ -85,7 +96,7 @@ When your household has **Put food away when it's checked off** on, checking an 
 
 ## Permissions and data
 
-The extension requests active-tab access and scripting to read the page you ask it to import, local storage for connections and keys, context menus, and Chromium's side-panel permission. It requests access to your Merran origin when connecting, rather than permanently reading every website. Walmart access is requested separately when you enable that workflow.
+The extension requests active-tab access, tabs, and scripting to read pages you ask it to import, local storage for connections and keys, context menus, and Chromium's side-panel permission. It requests access to your Merran origin when connecting, rather than permanently reading every website. Walmart access is requested separately when you enable that workflow.
 
 An import sends the page URL, title, structured recipe data, candidate image URLs, and extracted readable text to your server. That text can include content visible in a signed-in page. When AI fallback is used, relevant content is sent to the configured provider. See [AI privacy](../../project/ai-privacy/). The bridge on your Merran pages does not expose the stored key to those pages.
 

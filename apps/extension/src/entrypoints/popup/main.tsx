@@ -1,7 +1,13 @@
-import { StrictMode, useEffect, useState, type FormEvent } from "react"
+import { StrictMode, useEffect, useMemo, useState, type FormEvent } from "react"
 import { createRoot } from "react-dom/client"
 
 import { isVideoPage, openListPanel, readTab, type Added } from "@/lib/actions"
+import {
+  originsForLinks,
+  scanRecipeLinks,
+  type Batch,
+  type FoundLink,
+} from "@/lib/batch"
 import { HouseholdSwitch } from "@/lib/households"
 import {
   originOf,
@@ -233,6 +239,8 @@ function Connected({
         )}
       </section>
 
+      {tabId !== undefined && <BatchImport tabId={tabId} />}
+
       <button type="button" className="outline" onClick={() => void showList()}>
         Shopping list
       </button>
@@ -265,6 +273,311 @@ function Connected({
         </span>
       </div>
     </div>
+  )
+}
+
+function BatchImport({ tabId }: { tabId: number }) {
+  const [open, setOpen] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const [found, setFound] = useState<FoundLink[] | null>(null)
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [filter, setFilter] = useState("")
+  const [batch, setBatch] = useState<Batch | null>(null)
+  const [error, setError] = useState<string>()
+
+  useEffect(() => {
+    void (async () => {
+      const current = (await browser.runtime.sendMessage({
+        type: "batch-status",
+      })) as Batch | null
+      if (current) {
+        setBatch(current)
+        setOpen(true)
+      }
+    })()
+    const changed = (
+      changes: Record<string, { newValue?: unknown }>,
+      area: string
+    ) => {
+      if (area !== "session" || !("batch" in changes)) return
+      setBatch((changes.batch.newValue as Batch | undefined) ?? null)
+    }
+    browser.storage.onChanged.addListener(changed)
+    return () => browser.storage.onChanged.removeListener(changed)
+  }, [])
+
+  async function scan() {
+    setScanning(true)
+    setError(undefined)
+    setFound(null)
+    try {
+      const [read] = await browser.scripting.executeScript({
+        target: { tabId },
+        func: scanRecipeLinks,
+      })
+      const links = (read?.result ?? []) as FoundLink[]
+      setFound(links)
+      setPicked(new Set(links.map((link) => link.url)))
+      setOpen(true)
+    } catch (e) {
+      setError((e as Error).message || "Couldn't scan this page.")
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  const shown = useMemo(() => {
+    const links = found ?? []
+    const q = filter.trim().toLowerCase()
+    if (!q) return links
+    return links.filter(
+      (link) =>
+        link.text.toLowerCase().includes(q) ||
+        link.url.toLowerCase().includes(q)
+    )
+  }, [found, filter])
+
+  async function start() {
+    const links = (found ?? []).filter((link) => picked.has(link.url))
+    if (links.length === 0) return
+    setError(undefined)
+    const origins = originsForLinks(links.map((link) => link.url))
+    const granted = await browser.permissions.request({ origins })
+    if (!granted) {
+      setError(
+        "The extension needs permission to open and read those recipe pages."
+      )
+      return
+    }
+    await browser.runtime.sendMessage({ type: "batch-start", links })
+  }
+
+  async function stop() {
+    if (batch)
+      await browser.runtime.sendMessage({ type: "batch-stop", id: batch.id })
+  }
+
+  async function clear() {
+    await browser.runtime.sendMessage({ type: "batch-clear" })
+    setBatch(null)
+  }
+
+  const running = batch?.status === "running"
+  const selected = (found ?? []).filter((link) => picked.has(link.url)).length
+
+  return (
+    <section className="card">
+      <div className="row between">
+        <h2>Batch import</h2>
+        <button
+          type="button"
+          className="ghost small"
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? "Hide" : "Show"}
+        </button>
+      </div>
+
+      {open && (
+        <div className="stack">
+          <p className="muted small">
+            Scan this page for recipe links, then import them one by one. Each
+            page is opened in the background and added to the current household.
+          </p>
+
+          {batch ? (
+            <>
+              <p className="title">
+                {batch.status === "running"
+                  ? `Importing ${Math.min(batch.done + 1, batch.total)} of ${batch.total}…`
+                  : batch.status === "stopped"
+                    ? `Stopped: ${batch.done} of ${batch.total} processed`
+                    : `Done: ${batch.done} of ${batch.total} processed`}
+              </p>
+              <p className="muted small">
+                Added {batch.added}, already had {batch.already}, failed{" "}
+                {batch.failed}.
+              </p>
+              <div className="row">
+                {running ? (
+                  <button
+                    type="button"
+                    className="outline"
+                    onClick={() => void stop()}
+                  >
+                    Stop
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="outline"
+                    onClick={() => void clear()}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div
+                style={{
+                  maxHeight: 180,
+                  overflow: "auto",
+                  display: "grid",
+                  gap: 4,
+                }}
+              >
+                {batch.items.map((item) => (
+                  <div
+                    key={item.url}
+                    className="small"
+                    style={{ overflowWrap: "anywhere" }}
+                  >
+                    <span
+                      style={{
+                        color:
+                          item.state === "added"
+                            ? "var(--primary)"
+                            : item.state === "failed"
+                              ? "var(--destructive)"
+                              : "var(--muted-foreground)",
+                      }}
+                    >
+                      {item.state === "adding"
+                        ? "…"
+                        : item.state === "added"
+                          ? "✓"
+                          : item.state === "already"
+                            ? "="
+                            : item.state === "failed"
+                              ? "✗"
+                              : "·"}
+                    </span>{" "}
+                    {item.name || item.text}
+                    {item.state === "adding" && item.stage ? (
+                      <span className="muted"> ({item.stage})</span>
+                    ) : null}
+                    {item.error ? (
+                      <span className="error"> — {item.error}</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="outline"
+                onClick={() => void scan()}
+                disabled={scanning}
+              >
+                {scanning ? "Scanning…" : "Scan this page for recipe links"}
+              </button>
+              {found && (
+                <>
+                  <p className="small muted">
+                    Found {found.length} link{found.length === 1 ? "" : "s"}.
+                    Select the recipes to import.
+                  </p>
+                  {found.length > 0 && (
+                    <>
+                      <input
+                        type="text"
+                        value={filter}
+                        onChange={(event) => setFilter(event.target.value)}
+                        placeholder="Filter links…"
+                        aria-label="Filter links"
+                      />
+                      <div className="row">
+                        <button
+                          type="button"
+                          className="ghost small"
+                          onClick={() =>
+                            setPicked(new Set(found.map((l) => l.url)))
+                          }
+                        >
+                          Select all
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost small"
+                          onClick={() => setPicked(new Set())}
+                        >
+                          None
+                        </button>
+                        <span
+                          className="small muted grow"
+                          style={{ textAlign: "right" }}
+                        >
+                          {selected} selected
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          maxHeight: 180,
+                          overflow: "auto",
+                          display: "grid",
+                          gap: 2,
+                        }}
+                      >
+                        {shown.map((link) => (
+                          <label
+                            key={link.url}
+                            className="small"
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              alignItems: "flex-start",
+                              cursor: "pointer",
+                              padding: "2px 0",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={picked.has(link.url)}
+                              onChange={(event) => {
+                                setPicked((current) => {
+                                  const next = new Set(current)
+                                  if (event.target.checked) next.add(link.url)
+                                  else next.delete(link.url)
+                                  return next
+                                })
+                              }}
+                            />
+                            <span style={{ overflowWrap: "anywhere" }}>
+                              {link.text}
+                              <span
+                                className="muted"
+                                style={{ display: "block" }}
+                              >
+                                {new URL(link.url).host}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void start()}
+                        disabled={selected === 0}
+                      >
+                        Import {selected} selected
+                      </button>
+                      <p className="muted small">
+                        You can close this popup; the batch continues in the
+                        background. Large batches may take a while (one page at
+                        a time).
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {error && <p className="error small">{error}</p>}
+        </div>
+      )}
+    </section>
   )
 }
 

@@ -7,6 +7,8 @@ import {
   readTab,
   type Added,
 } from "@/lib/actions"
+import { clearBatch, getBatch, runBatch, stopBatch } from "@/lib/batch-runner"
+import type { FoundLink } from "@/lib/batch"
 import { syncBridge } from "@/lib/bridge"
 import { addConnection, apiFor, unwrap } from "@/lib/merran"
 import { listenForKey, showNote } from "@/lib/page"
@@ -167,6 +169,25 @@ export default defineBackground(() => {
     if (message?.type === "add-tab" && typeof message.tabId === "number") {
       void addTab(message.tabId).then(respond)
       // It answers when it's done.
+      return true
+    }
+    // From the popup: import selected recipe links one by one.
+    if (message?.type === "batch-start" && Array.isArray(message.links)) {
+      void runBatch(message.links as FoundLink[]).catch(() => {})
+      respond({ started: true })
+      return
+    }
+    if (message?.type === "batch-stop") {
+      stopBatch(typeof message.id === "string" ? message.id : undefined)
+      respond({ stopped: true })
+      return
+    }
+    if (message?.type === "batch-status") {
+      void getBatch().then(respond)
+      return true
+    }
+    if (message?.type === "batch-clear") {
+      void clearBatch().then(() => respond({ cleared: true }))
       return true
     }
     // From the popup: open Merran's connect page, and wait there for a key.
