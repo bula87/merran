@@ -284,6 +284,8 @@ function BatchImport({ tabId }: { tabId: number }) {
   const [filter, setFilter] = useState("")
   const [batch, setBatch] = useState<Batch | null>(null)
   const [error, setError] = useState<string>()
+  const [timeoutSec, setTimeoutSec] = useState(60)
+  const [scanMax, setScanMax] = useState(5000)
 
   useEffect(() => {
     void (async () => {
@@ -314,6 +316,7 @@ function BatchImport({ tabId }: { tabId: number }) {
       const [read] = await browser.scripting.executeScript({
         target: { tabId },
         func: scanRecipeLinks,
+        args: [Math.max(1, Math.min(10000, scanMax))],
       })
       const links = (read?.result ?? []) as FoundLink[]
       setFound(links)
@@ -349,7 +352,11 @@ function BatchImport({ tabId }: { tabId: number }) {
       )
       return
     }
-    await browser.runtime.sendMessage({ type: "batch-start", links })
+    await browser.runtime.sendMessage({
+      type: "batch-start",
+      links,
+      options: { importTimeoutSec: Math.max(15, Math.min(600, timeoutSec)) },
+    })
   }
 
   async function stop() {
@@ -464,6 +471,44 @@ function BatchImport({ tabId }: { tabId: number }) {
             </>
           ) : (
             <>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                }}
+              >
+                <label className="small">
+                  <span className="muted" style={{ display: "block" }}>
+                    Import timeout (s)
+                  </span>
+                  <input
+                    type="number"
+                    min={15}
+                    max={600}
+                    value={timeoutSec}
+                    onChange={(event) =>
+                      setTimeoutSec(Number(event.target.value) || 60)
+                    }
+                    style={{ width: "100%" }}
+                  />
+                </label>
+                <label className="small">
+                  <span className="muted" style={{ display: "block" }}>
+                    Scan max links
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={scanMax}
+                    onChange={(event) =>
+                      setScanMax(Number(event.target.value) || 5000)
+                    }
+                    style={{ width: "100%" }}
+                  />
+                </label>
+              </div>
               <button
                 type="button"
                 className="outline"

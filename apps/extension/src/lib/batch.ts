@@ -34,7 +34,7 @@ export type Batch = {
 }
 
 /** Scans the open page for recipe links. Runs inside the page. */
-export function scanRecipeLinks(): FoundLink[] {
+export function scanRecipeLinks(max = 5000): FoundLink[] {
   const origin = location.origin
   const root =
     document.querySelector("main") ??
@@ -116,7 +116,35 @@ export function scanRecipeLinks(): FoundLink[] {
     }
   }
 
-  return found.slice(0, 500)
+  // Recipe-path links anywhere on the page (some listings render outside main).
+  if (found.length < max) {
+    for (const node of Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("a[href]")
+    )) {
+      if (found.length >= max) break
+      const raw = node.getAttribute("href")?.trim()
+      if (!raw) continue
+      let url: URL
+      try {
+        url = new URL(raw, location.href)
+      } catch {
+        continue
+      }
+      if (url.protocol !== "http:" && url.protocol !== "https:") continue
+      if (!recipePath.test(url.pathname)) continue
+      url.hash = ""
+      const href = url.toString()
+      if (seen.has(href)) continue
+      seen.add(href)
+      const text = (node.innerText || node.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+      if (text.length < 2 || text.length > 200) continue
+      found.push({ url: href, text: text.slice(0, 160) })
+    }
+  }
+
+  return found.slice(0, Math.max(1, max))
 }
 
 /** Origins that need host permission to read imported pages. */

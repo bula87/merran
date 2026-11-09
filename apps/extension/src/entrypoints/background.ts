@@ -7,7 +7,13 @@ import {
   readTab,
   type Added,
 } from "@/lib/actions"
-import { clearBatch, getBatch, runBatch, stopBatch } from "@/lib/batch-runner"
+import {
+  clearBatch,
+  getBatch,
+  runBatch,
+  stopBatch,
+  type BatchOptions,
+} from "@/lib/batch-runner"
 import type { FoundLink } from "@/lib/batch"
 import { syncBridge } from "@/lib/bridge"
 import { addConnection, apiFor, unwrap } from "@/lib/merran"
@@ -173,7 +179,11 @@ export default defineBackground(() => {
     }
     // From the popup: import selected recipe links one by one.
     if (message?.type === "batch-start" && Array.isArray(message.links)) {
-      void runBatch(message.links as FoundLink[]).catch(() => {})
+      const options =
+        message.options && typeof message.options === "object"
+          ? (message.options as BatchOptions)
+          : undefined
+      void runBatch(message.links as FoundLink[], options).catch(() => {})
       respond({ started: true })
       return
     }

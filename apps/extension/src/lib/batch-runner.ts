@@ -1,10 +1,13 @@
 import { importRead, readTab } from "./actions"
 import { emptyBatch, type Batch, type FoundLink } from "./batch"
-import type { PageRead } from "./page"
 
 const STORAGE_KEY = "batch"
 const TAB_TIMEOUT_MS = 45_000
-const IMPORT_TIMEOUT_MS = 60_000
+const DEFAULT_IMPORT_TIMEOUT_SEC = 60
+
+export type BatchOptions = {
+  importTimeoutSec?: number
+}
 
 type ImportResult = Awaited<ReturnType<typeof importRead>>
 
@@ -22,22 +25,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number) {
       }
     )
   })
-}
-
-async function importWithRecovery(page: PageRead): Promise<ImportResult> {
-  try {
-    return await withTimeout(importRead(page), IMPORT_TIMEOUT_MS)
-  } catch (error) {
-    if ((error as Error).message !== "timeout") throw error
-    // The server may still be finishing; the same page returns quickly as a
-    // duplicate once the recipe exists.
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-    const retry = await importRead(page)
-    if (retry.result.duplicate) {
-      return { ...retry, result: { ...retry.result, duplicate: false } }
-    }
-    throw new Error("Import timed out and the recipe was not added.")
-  }
 }
 
 let stopId: string | null = null
@@ -119,7 +106,12 @@ function isStopped(batchId: string) {
   return stopId === batchId || stopId === "stop"
 }
 
-export async function runBatch(links: FoundLink[]) {
+export async function runBatch(links: FoundLink[], options: BatchOptions = {}) {
+  const importTimeoutSec = Math.min(
+    600,
+    Math.max(15, options.importTimeoutSec ?? DEFAULT_IMPORT_TIMEOUT_SEC)
+  )
+  const importTimeoutMs = importTimeoutSec * 1000
   const id = crypto.randomUUID()
   stopId = null
   const batch = emptyBatch(links, id)
@@ -146,15 +138,45 @@ export async function runBatch(links: FoundLink[]) {
       item.stage = "reading"
       await save(batch)
       const page = await readTab(tabId)
-      item.stage = "importing"
+      item.stage = `importing (${importTimeoutSec}s)`
       await save(batch)
-      const { result, link } = await importWithRecovery(page)
-      item.state = result.duplicate ? "already" : "added"
-      item.stage = null
-      item.name = result.recipe.name
-      item.link = link
-      if (result.duplicate) batch.already++
-      else batch.added++
+      let left = importTimeoutSec
+      const countdown = setInterval(() => {
+        left = Math.max(0, left - 1)
+        if (item.state === "adding" && item.stage?.startsWith("importing (")) {
+          item.stage = `importing (${left}s)`
+        }
+        void save(batch)
+      }, 1000)
+      try {
+        let imported: ImportResult
+        try {
+          imported = await withTimeout(importRead(page), importTimeoutMs)
+        } catch (error) {
+          if ((error as Error).message !== "timeout") throw error
+          item.stage = "checking…"
+          await save(batch)
+          await new Promise((resolve) => setTimeout(resolve, 5000))
+          const retry = await importRead(page)
+          if (retry.result.duplicate) {
+            imported = {
+              ...retry,
+              result: { ...retry.result, duplicate: false },
+            }
+          } else {
+            throw new Error("Import timed out and the recipe was not added.")
+          }
+        }
+        const { result, link } = imported
+        item.state = result.duplicate ? "already" : "added"
+        item.stage = null
+        item.name = result.recipe.name
+        item.link = link
+        if (result.duplicate) batch.already++
+        else batch.added++
+      } finally {
+        clearInterval(countdown)
+      }
     } catch (error) {
       if (error instanceof BatchStopped || isStopped(id)) {
         batch.status = "stopped"
