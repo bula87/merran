@@ -4,6 +4,7 @@ import { createApp } from "./app.ts"
 import { createAuth } from "./services/auth/auth.ts"
 import { SetupCode } from "./services/auth/setup-code.ts"
 import { loadConfig, type Config } from "./core/config.ts"
+import { createLogBuffer } from "./core/log-buffer.ts"
 import { createLogger } from "./core/logger.ts"
 import { loadSecret } from "./core/secret.ts"
 import { User } from "./database/entities/index.ts"
@@ -30,7 +31,8 @@ try {
   process.exit(1)
 }
 
-const logger = createLogger(config)
+const logs = createLogBuffer()
+const logger = createLogger(config, logs)
 if (config.devSetup)
   logger.warn(
     `Development setup: fresh temporary SQLite at ${config.dataDir}. Normal data is untouched.`
@@ -93,6 +95,7 @@ const jobs = new JobRunner({
     media,
     video,
     events,
+    logs,
   },
   handlers: JOB_HANDLERS,
   schedules: JOB_SCHEDULES,
@@ -114,6 +117,7 @@ const app = createApp({
   video,
   jobs,
   events,
+  logs,
 })
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {

@@ -16,6 +16,7 @@ import { ErrorTrackingCard } from "@/features/server/error-tracking-card"
 import { EmailCard } from "@/features/server/email-card"
 import { FlareSolverrCard } from "@/features/server/flaresolverr-card"
 import { JobsCard, serverJobsQuery } from "@/features/server/jobs-card"
+import { LogsCard } from "@/features/server/logs-card"
 import { KrogerCard } from "@/features/server/kroger-card"
 import { NutritionCard } from "@/features/server/nutrition-card"
 import { PhotosCard } from "@/features/server/photos-card"
@@ -119,6 +120,7 @@ function ServerSettings() {
               <ErrorTrackingCard />
               <TelemetryCard />
               <JobsCard />
+              <LogsCard />
             </>
           ),
         },

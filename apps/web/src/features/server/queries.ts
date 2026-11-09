@@ -26,6 +26,18 @@ export const telemetryStatusQuery = queryOptions({
   queryFn: () => unwrap(api.GET("/api/telemetry/status")),
 })
 
+export const serverLogsQuery = (level?: number) =>
+  queryOptions({
+    queryKey: ["settings", "server", "logs", level ?? "all"],
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/settings/server/logs", {
+          params: { query: { limit: 200, ...(level ? { level } : {}) } },
+        })
+      ),
+    refetchInterval: 10_000,
+  })
+
 /** Saves server settings, then refreshes everything they change. */
 export function useSaveServerSettings() {
   const queryClient = useQueryClient()

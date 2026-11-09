@@ -3,6 +3,7 @@ import { tmpdir } from "node:os"
 import { join as joinPath } from "node:path"
 import { pino } from "pino"
 import { createApp, type App } from "../app.ts"
+import { createLogBuffer } from "../core/log-buffer.ts"
 import { MODULES } from "../modules/index.ts"
 import { startModules, type Module } from "../modules/module.ts"
 import type { MediaMakers } from "../services/ai/media.ts"
@@ -73,6 +74,7 @@ export async function createTestApp(
     // Uploads and the like go in the test's own folder, never the repo's.
     dataDir: filesDir,
   }
+  const logs = createLogBuffer()
   const logger = pino({ level: "silent" })
   const auth = createAuth({ config, database, secret: TEST_SECRET })
   const settings = createSettings({
@@ -117,6 +119,7 @@ export async function createTestApp(
       media,
       video,
       events,
+      logs,
     },
     handlers: [...JOB_HANDLERS, ...(options.jobHandlers ?? [])],
   })
@@ -136,6 +139,7 @@ export async function createTestApp(
     video,
     jobs,
     events,
+    logs,
   })
   return {
     app,

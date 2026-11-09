@@ -206,6 +206,10 @@ export async function readRecipe(
           ...(pdfs ? (["pdfs"] as const) : []),
         ],
         ...(modelRef ? { modelRef } : {}),
+        aiLog: {
+          input: { system, source: options.source, content: options.content },
+          output: (result) => result.output,
+        },
       },
       (model) =>
         generateText({

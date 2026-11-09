@@ -15,6 +15,7 @@ import type { Settings } from "../services/settings/settings.ts"
 import type { FileStore } from "../services/storage/files.ts"
 import type { VideoTools } from "../services/recipes/import/video/tools.ts"
 import type { Config } from "./config.ts"
+import type { LogBuffer } from "./log-buffer.ts"
 
 /** What the app is built from. Tests pass their own. */
 export type AppDeps = {
@@ -43,6 +44,8 @@ export type AppDeps = {
   jobs: JobRunner
   /** What changed in each household, for live updates. */
   events: EventBus
+  /** Recent server log entries, for the admin log view. */
+  logs: LogBuffer
 }
 
 /** Variables set on every request. `requestId` comes from Hono's middleware. */

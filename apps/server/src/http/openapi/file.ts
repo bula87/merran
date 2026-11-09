@@ -3,6 +3,7 @@ import { join } from "node:path"
 import { pino } from "pino"
 import { createApp } from "../../app.ts"
 import { loadConfig } from "../../core/config.ts"
+import { createLogBuffer } from "../../core/log-buffer.ts"
 import { migrate, openDatabase } from "../../database/orm.ts"
 import { MODULES } from "../../modules/index.ts"
 import { createAuth } from "../../services/auth/auth.ts"
@@ -34,6 +35,7 @@ export async function createOpenApiFile(): Promise<string> {
   try {
     await migrate(database)
     const secret = "only used to describe the API, never to sign anything"
+    const logs = createLogBuffer()
     const logger = pino({ level: "silent" })
     const auth = createAuth({ config, database, secret })
     const settings = createSettings({
@@ -79,10 +81,12 @@ export async function createOpenApiFile(): Promise<string> {
           media,
           video,
           events,
+          logs,
         },
         handlers: [],
       }),
       events,
+      logs,
     })
     const document = await buildOpenApiDocument(app, auth, {
       version: config.version,

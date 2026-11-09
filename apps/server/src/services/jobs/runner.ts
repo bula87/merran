@@ -2,6 +2,7 @@ import type { EntityManager } from "@mikro-orm/sql"
 import { Cron } from "croner"
 import type { Logger } from "pino"
 import type { Config } from "../../core/config.ts"
+import type { LogBuffer } from "../../core/log-buffer.ts"
 import { Job } from "../../database/entities/index.ts"
 import type { Database } from "../../database/orm.ts"
 import { forHousehold } from "../../database/scope.ts"
@@ -41,6 +42,8 @@ export type JobDeps = {
   video: VideoTools
   /** What changed in each household, so open pages see what a job did. */
   events: EventBus
+  /** Recent server log entries. */
+  logs: LogBuffer
 }
 
 export type JobContext = {

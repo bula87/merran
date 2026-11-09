@@ -952,6 +952,16 @@
         "description": "Experimental. Households in the US can fill their Walmart cart through Merran's browser extension, which finds each thing and adds it in a Walmart tab of the person's own, at a person's pace. Merran never reaches Walmart itself, and stops whenever Walmart asks whether it's a person.",
         "switch": "Walmart through the extension",
         "switchHint": "Off until you turn it on. Walmart has no way in for apps like Merran, so a change to its site can stop this working until Merran catches up."
+      },
+      "logs": {
+        "title": "Server logs",
+        "description": "Recent server log entries. AI processing logs include the model, input, and response.",
+        "all": "All levels",
+        "ai": "AI processing",
+        "warn": "Warnings & errors",
+        "error": "Errors only",
+        "refresh": "Refresh",
+        "none": "No log entries yet."
       }
     },
     "transfer": {

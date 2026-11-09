@@ -32,7 +32,7 @@ const MOST_STEPS = 8
 
 export type RespondDeps = Pick<
   AppDeps,
-  "settings" | "fetcher" | "ai" | "files" | "database"
+  "settings" | "fetcher" | "ai" | "logger" | "files" | "database"
 >
 
 export async function respond(
@@ -78,6 +78,14 @@ export async function respond(
       ...(types.has("image/jpeg") ? (["images"] as const) : []),
       ...(types.has("application/pdf") ? (["pdfs"] as const) : []),
     ],
+    aiLog: {
+      input: {
+        chatId: options.chatId,
+        text: options.text,
+        files: sent,
+        context: options.context ?? null,
+      },
+    },
   })
   const [history, person, household, tastes, today, onScreen] =
     await Promise.all([

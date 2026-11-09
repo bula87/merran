@@ -14047,6 +14047,40 @@
           "clientId": "merran-abc123"
         }
       },
+      "ServerLogs": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServerLogEntry"
+            }
+          }
+        },
+        "required": [
+          "entries"
+        ]
+      },
+      "ServerLogEntry": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "number"
+          },
+          "level": {
+            "type": "number"
+          },
+          "msg": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "level",
+          "msg"
+        ],
+        "additionalProperties": {}
+      },
       "UsdaKeyTested": {
         "type": "object",
         "properties": {
@@ -33119,6 +33153,76 @@
           },
           "502": {
             "description": "Kroger didn't answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/server/logs": {
+      "get": {
+        "operationId": "getServerLogs",
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Server logs",
+        "description": "Server admins only. Recent server log entries, including AI processing logs (model, input, output).",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 200
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 60
+            },
+            "required": false,
+            "name": "level",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent log entries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerLogs"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
             "content": {
               "application/json": {
                 "schema": {

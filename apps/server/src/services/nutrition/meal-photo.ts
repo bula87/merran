@@ -153,6 +153,10 @@ export async function analyzeMealPhoto(
         task: "nutrition",
         needs: ["structured", "images"],
         ...(modelRef ? { modelRef } : {}),
+        aiLog: {
+          input: { system: SYSTEM, content },
+          output: (result) => result.output,
+        },
       },
       (model) =>
         generateText({

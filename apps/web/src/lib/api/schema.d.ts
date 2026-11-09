@@ -3628,6 +3628,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/server/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Server logs
+         * @description Server admins only. Recent server log entries, including AI processing logs (model, input, output).
+         */
+        get: operations["getServerLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings/server/nutrition/test": {
         parameters: {
             query?: never;
@@ -11943,6 +11963,16 @@ export interface components {
         KrogerAppTest: {
             clientId?: string;
             clientSecret?: string;
+        };
+        ServerLogs: {
+            entries: components["schemas"]["ServerLogEntry"][];
+        };
+        ServerLogEntry: {
+            time: number;
+            level: number;
+            msg: string;
+        } & {
+            [key: string]: unknown;
         };
         /**
          * @example {
@@ -24390,6 +24420,47 @@ export interface operations {
             };
             /** @description Kroger didn't answer. */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getServerLogs: {
+        parameters: {
+            query?: {
+                limit?: number;
+                level?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent log entries. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerLogs"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

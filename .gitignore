@@ -25,6 +25,8 @@ apps/REFERENCE/server/data/
 
 # Logs
 logs
+!apps/server/src/http/routes/settings/server/logs/
+!apps/server/src/http/routes/settings/server/logs/**
 *.log
 npm-debug.log*
 

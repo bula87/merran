@@ -36,7 +36,9 @@ import { recordUsage } from "./usage.ts"
 // goes to the next key there is.
 
 /** What calling AI takes: settings for whose key pays, and the models. */
-export type AiDeps = Pick<AppDeps, "settings" | "fetcher" | "ai">
+export type AiDeps = Pick<AppDeps, "settings" | "fetcher" | "ai"> & {
+  logger?: AppDeps["logger"]
+}
 
 /** Why a feature can't use AI, said so someone can fix it. */
 const UNAVAILABLE: Record<
@@ -150,6 +152,62 @@ function extrasFor(target: AiTarget, model: string): AiExtras {
  * and `finished` records what the stream took when it's done. A key out
  * of credit is noted by `failed`, for the next message to go elsewhere.
  */
+function summarizeAiValue(value: unknown, depth = 4): unknown {
+  if (value == null) return value
+  if (typeof value === "string")
+    return value.length > 6000
+      ? `${value.slice(0, 6000)}… [${value.length} chars]`
+      : value
+  if (typeof value === "number" || typeof value === "boolean") return value
+  if (value instanceof Error)
+    return { name: value.name, message: value.message }
+  if (Buffer.isBuffer(value) || value instanceof Uint8Array)
+    return `[binary ${(value as Uint8Array).byteLength ?? value.length} bytes]`
+  if (Array.isArray(value)) {
+    if (depth <= 0) return `[array ${value.length}]`
+    return value
+      .slice(0, 30)
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const part = item as Record<string, unknown>
+          if (part.type === "image")
+            return {
+              type: "image",
+              mediaType: part.mediaType,
+              size: Buffer.isBuffer(part.image)
+                ? part.image.length
+                : typeof part.image === "string"
+                  ? part.image.length
+                  : undefined,
+            }
+          if (part.type === "file")
+            return {
+              type: "file",
+              mediaType: part.mediaType,
+              size: Buffer.isBuffer(part.data)
+                ? part.data.length
+                : typeof part.data === "string"
+                  ? part.data.length
+                  : undefined,
+            }
+        }
+        return summarizeAiValue(item, depth - 1)
+      })
+      .concat(value.length > 30 ? [`… ${value.length - 30} more`] : [])
+  }
+  if (typeof value === "object") {
+    if (depth <= 0) return "[object]"
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (/key|token|secret|password|authorization|cookie/i.test(k))
+        out[k] = "[redacted]"
+      else out[k] = summarizeAiValue(v, depth - 1)
+    }
+    return out
+  }
+  return String(value)
+}
+
 export async function prepareAi(
   deps: AiDeps,
   em: EntityManager,
@@ -158,8 +216,10 @@ export async function prepareAi(
     userId: string | null
     task: AiTask
     needs?: readonly ModelAbility[]
+    aiLog?: { input?: unknown }
   }
 ) {
+  const started = Date.now()
   const resolution = await resolveTask(
     deps,
     em,
@@ -180,10 +240,25 @@ export async function prepareAi(
     )
   }
   const target = await targetOf(deps, em, key.id, model)
+  deps.logger?.info(
+    {
+      ai: {
+        event: "prepared",
+        task: options.task,
+        provider: key.provider,
+        model,
+        source: key.source,
+        householdId: options.householdId,
+        userId: options.userId,
+        input: summarizeAiValue(options.aiLog?.input),
+      },
+    },
+    "AI prepared"
+  )
   return {
     model: deps.ai(target),
     ...extrasFor(target, model),
-    async finished(usage: LanguageModelUsage) {
+    async finished(usage: LanguageModelUsage, output?: unknown) {
       await clearOutOfCredit(deps, em, key.id)
       await recordUsage(em, {
         householdId: options.householdId,
@@ -196,9 +271,45 @@ export async function prepareAi(
         inputTokens: usage.inputTokens ?? 0,
         outputTokens: usage.outputTokens ?? 0,
       })
+      deps.logger?.info(
+        {
+          ai: {
+            event: "finished",
+            ok: true,
+            task: options.task,
+            provider: key.provider,
+            model,
+            source: key.source,
+            householdId: options.householdId,
+            userId: options.userId,
+            ms: Date.now() - started,
+            inputTokens: usage.inputTokens ?? 0,
+            outputTokens: usage.outputTokens ?? 0,
+            output: summarizeAiValue(output),
+          },
+        },
+        "AI finished"
+      )
     },
     async failed(error: unknown) {
       if (isOutOfCredit(error)) await markOutOfCredit(deps, em, key.id)
+      deps.logger?.warn(
+        {
+          ai: {
+            event: "failed",
+            ok: false,
+            task: options.task,
+            provider: key.provider,
+            model,
+            source: key.source,
+            householdId: options.householdId,
+            userId: options.userId,
+            ms: Date.now() - started,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        },
+        "AI failed"
+      )
       return callFailed(error, key.provider)
     },
     /** What went wrong, in words to show. */
@@ -232,11 +343,14 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
     needs?: readonly ModelAbility[]
     /** Use this model instead of the task's resolved model, when set. */
     modelRef?: string
+    /** Input/output to include in AI processing logs (sanitized). */
+    aiLog?: { input?: unknown; output?: (result: any) => unknown }
   },
   call: (model: LanguageModel, extras: AiExtras) => Promise<T>
 ): Promise<T> {
   // A key that turns out to be out of credit is noted, and the next tried:
   // a few at most.
+  const started = Date.now()
   const outOfCredit: string[] = []
   for (let tries = 0; tries < 5; tries++) {
     const resolution = await resolveTask(
@@ -264,10 +378,41 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
       )
     }
     const target = await targetOf(deps, em, key.id, model)
+    deps.logger?.info(
+      {
+        ai: {
+          event: "call",
+          task: options.task,
+          provider: key.provider,
+          model,
+          source: key.source,
+          modelRef: options.modelRef ?? null,
+          householdId: options.householdId,
+          userId: options.userId,
+          input: summarizeAiValue(options.aiLog?.input),
+        },
+      },
+      "AI call"
+    )
     let result: T
     try {
       result = await call(deps.ai(target), extrasFor(target, model))
     } catch (error) {
+      deps.logger?.warn(
+        {
+          ai: {
+            event: "error",
+            ok: false,
+            task: options.task,
+            provider: key.provider,
+            model,
+            source: key.source,
+            ms: Date.now() - started,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        },
+        "AI error"
+      )
       if (!isOutOfCredit(error)) throw callFailed(error, key.provider)
       await markOutOfCredit(deps, em, key.id)
       outOfCredit.push(PROVIDER_NAMES[key.provider])
@@ -285,6 +430,23 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
       inputTokens: result.usage.inputTokens ?? 0,
       outputTokens: result.usage.outputTokens ?? 0,
     })
+    deps.logger?.info(
+      {
+        ai: {
+          event: "result",
+          ok: true,
+          task: options.task,
+          provider: key.provider,
+          model,
+          source: key.source,
+          ms: Date.now() - started,
+          inputTokens: result.usage.inputTokens ?? 0,
+          outputTokens: result.usage.outputTokens ?? 0,
+          output: summarizeAiValue(options.aiLog?.output?.(result)),
+        },
+      },
+      "AI result"
+    )
     return result
   }
   throw outOfCreditError(outOfCredit[0] ?? "The provider")
