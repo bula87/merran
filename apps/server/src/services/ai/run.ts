@@ -382,7 +382,12 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
     /** Use this model instead of the task's resolved model, when set. */
     modelRef?: string
     /** Input/output to include in AI processing logs (sanitized). */
-    aiLog?: { input?: unknown; output?: (result: any) => unknown }
+    aiLog?: {
+      input?: unknown
+      output?: (result: any) => unknown
+      /** Full request payload/messages sent to the model for debugging. */
+      rawRequest?: unknown
+    }
   },
   call: (model: LanguageModel, extras: AiExtras) => Promise<T>
 ): Promise<T> {
@@ -428,6 +433,7 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
           householdId: options.householdId,
           userId: options.userId,
           input: summarizeAiValue(options.aiLog?.input),
+          rawRequest: options.aiLog?.rawRequest,
         },
       },
       "AI call"
@@ -468,6 +474,29 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
       inputTokens: result.usage.inputTokens ?? 0,
       outputTokens: result.usage.outputTokens ?? 0,
     })
+    const rawResponse = (() => {
+      const r = result as Record<string, unknown>
+      const body: Record<string, unknown> = {}
+      if (typeof r.text === "string") body.text = r.text
+      if (typeof r.reasoningText === "string")
+        body.reasoningText = r.reasoningText
+      if (r.output !== undefined) body.output = r.output
+      if (r.object !== undefined) body.object = r.object
+      if (r.response && typeof r.response === "object") {
+        const res = r.response as Record<string, unknown>
+        body.responseBody = res.body
+        body.responseId = res.id
+        body.responseModelId = res.modelId
+        body.headers = res.headers
+      }
+      if (r.request && typeof r.request === "object") {
+        body.request = r.request
+      }
+      if (Array.isArray(r.warnings) && r.warnings.length > 0)
+        body.warnings = r.warnings
+      if (r.finishReason) body.finishReason = r.finishReason
+      return Object.keys(body).length > 0 ? body : undefined
+    })()
     deps.logger?.info(
       {
         ai: {
@@ -481,6 +510,7 @@ export async function useAi<T extends { usage: LanguageModelUsage }>(
           inputTokens: result.usage.inputTokens ?? 0,
           outputTokens: result.usage.outputTokens ?? 0,
           output: summarizeAiValue(options.aiLog?.output?.(result)),
+          rawResponse,
         },
       },
       "AI result"

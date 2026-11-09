@@ -361,6 +361,7 @@ export async function aiSuggestMeals(
         modelRef,
         aiLog: {
           input: { slotCount: options.slots.length, poolSize: pool.length },
+          rawRequest: { system, prompt },
         },
       },
       (model) =>
