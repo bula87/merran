@@ -265,6 +265,30 @@ export interface paths {
         patch: operations["updateOnboarding"];
         trace?: never;
     };
+    "/api/auth/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get your personal profile
+         * @description Your personal details and preferences used for meal planning, such as physical data, food preferences, meals, cooking devices, and goals.
+         */
+        get: operations["getMyProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update your personal profile
+         * @description Saves your personal details and preferences for future meal planning.
+         */
+        patch: operations["updateMyProfile"];
+        trace?: never;
+    };
     "/api/auth/me/export": {
         parameters: {
             query?: never;
@@ -5608,6 +5632,18 @@ export interface components {
             reviewed?: true;
             /** @enum {boolean} */
             recordProgress?: true;
+        };
+        UserProfile: {
+            age: number | null;
+            weightKg: number | null;
+            heightCm: number | null;
+            allergies: string[];
+            favoriteFoods: string[];
+            dislikedFoods: string[];
+            mealsPerDay: ("breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner")[];
+            cookingDevices: ("mixer-thermomix" | "air-fryer")[];
+            /** @enum {string|null} */
+            goal: "weight-loss" | "more-energy" | "better-eating-habits" | null;
         };
         /**
          * @example {
@@ -14276,6 +14312,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Onboarding"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Your profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfile"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateMyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfile"];
+            };
+        };
+        responses: {
+            /** @description Profile saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfile"];
                 };
             };
             /** @description Not signed in. */

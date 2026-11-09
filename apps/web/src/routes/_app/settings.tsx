@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_app/settings")({
 /** Each tab, and who sees it: everyone, household admins, or the server admin. */
 const SECTIONS = [
   { to: "/settings/you", labelKey: "settings.you.tab", only: null },
+  { to: "/settings/personal", labelKey: "settings.personal.tab", only: null },
   {
     to: "/settings/household",
     labelKey: "settings.household.tab",

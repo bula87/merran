@@ -1056,6 +1056,49 @@
         "fromMealie_other": "{{count}} from Mealie are here already, so they're skipped.",
         "change": "Change"
       }
+    },
+    "personal": {
+      "tab": "Osobiste",
+      "group": {
+        "title": "O Tobie",
+        "description": "Osobiste dane i preferencje używane do planowania posiłków dopasowanych do Ciebie."
+      },
+      "title": "Profil osobisty",
+      "description": "Wiek, dane fizyczne, preferencje żywieniowe, harmonogram posiłków, urządzenia kuchenne i cel. Merran może użyć tych danych później przy przygotowywaniu tygodniowego planu posiłków.",
+      "saved": "Zapisano profil osobisty",
+      "add": "Dodaj",
+      "remove": "Usuń {{item}}",
+      "age": "Wiek",
+      "agePlaceholder": "Lata",
+      "weight": "Waga (kg)",
+      "height": "Wzrost (cm)",
+      "allergies": "Alergie",
+      "allergiesDescription": "Produkty powodujące reakcje alergiczne.",
+      "favoriteFoods": "Ulubione jedzenie",
+      "dislikedFoods": "Nielubiane jedzenie",
+      "foodPlaceholder": "Wpisz produkt i naciśnij Enter",
+      "mealsPerDay": "Posiłki dziennie",
+      "mealsPerDayDescription": "Wybierz posiłki, które zwykle jesz.",
+      "mealSlots": {
+        "breakfast": "Śniadanie",
+        "morning-snack": "Drugie śniadanie",
+        "lunch": "Obiad",
+        "afternoon-snack": "Podwieczorek",
+        "dinner": "Kolacja"
+      },
+      "cookingDevices": "Dodatkowe urządzenia kuchenne",
+      "devices": {
+        "mixer-thermomix": "Mikser / Thermomix",
+        "air-fryer": "Frytkownica beztłuszczowa"
+      },
+      "goal": "Cel",
+      "goalPlaceholder": "Wybierz cel",
+      "goalNone": "Brak wybranego celu",
+      "goals": {
+        "weight-loss": "Utrata wagi",
+        "more-energy": "Więcej energii",
+        "better-eating-habits": "Lepsze nawyki żywieniowe"
+      }
     }
   },
   "plan": {

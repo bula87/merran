@@ -1,6 +1,27 @@
 import { defineEntity, p, type InferEntity } from "@mikro-orm/core"
 import { createdAt, id, updatedAt } from "./base.ts"
 
+export type UserMealSlot =
+  "breakfast" | "morning-snack" | "lunch" | "afternoon-snack" | "dinner"
+
+export type UserCookingDevice = "mixer-thermomix" | "air-fryer"
+
+export type UserGoal = "weight-loss" | "more-energy" | "better-eating-habits"
+
+export type UserProfilePreferences = {
+  age?: number | null
+  /** Kilograms. */
+  weightKg?: number | null
+  /** Centimeters. */
+  heightCm?: number | null
+  allergies?: string[]
+  favoriteFoods?: string[]
+  dislikedFoods?: string[]
+  mealsPerDay?: UserMealSlot[]
+  cookingDevices?: UserCookingDevice[]
+  goal?: UserGoal | null
+}
+
 /** Each person's own choices, the same in every household they're in. */
 export type UserPreferences = {
   appearance?: { mode: "light" | "dark" | "system"; palette: string }
@@ -9,6 +30,7 @@ export type UserPreferences = {
   /** Guided tours seen, by tour id, at the version seen. */
   tours?: Record<string, number>
   onboarding?: { dismissed?: boolean; toursDisabled?: boolean }
+  profile?: UserProfilePreferences
 }
 
 /**

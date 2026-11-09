@@ -36,6 +36,7 @@ import { Route as AppRecipesNewRouteImport } from './routes/_app/recipes/new'
 import { Route as AppRecipesReviewRouteImport } from './routes/_app/recipes/review'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsHouseholdRouteImport } from './routes/_app/settings/household'
+import { Route as AppSettingsPersonalRouteImport } from './routes/_app/settings/personal'
 import { Route as AppSettingsImportExportRouteImport } from './routes/_app/settings/import-export'
 import { Route as AppSettingsServerRouteImport } from './routes/_app/settings/server'
 import { Route as AppSettingsYouRouteImport } from './routes/_app/settings/you'
@@ -182,6 +183,11 @@ const AppSettingsHouseholdRoute = AppSettingsHouseholdRouteImport.update({
   path: '/household',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsPersonalRoute = AppSettingsPersonalRouteImport.update({
+  id: '/personal',
+  path: '/personal',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsImportExportRoute = AppSettingsImportExportRouteImport.update({
   id: '/import-export',
   path: '/import-export',
@@ -268,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/review': typeof AppRecipesReviewRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
+  '/settings/personal': typeof AppSettingsPersonalRoute
   '/settings/import-export': typeof AppSettingsImportExportRoute
   '/settings/server': typeof AppSettingsServerRoute
   '/settings/you': typeof AppSettingsYouRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/review': typeof AppRecipesReviewRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
+  '/settings/personal': typeof AppSettingsPersonalRoute
   '/settings/import-export': typeof AppSettingsImportExportRoute
   '/settings/server': typeof AppSettingsServerRoute
   '/settings/you': typeof AppSettingsYouRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/_app/recipes/new': typeof AppRecipesNewRoute
   '/_app/recipes/review': typeof AppRecipesReviewRoute
   '/_app/settings/household': typeof AppSettingsHouseholdRoute
+  '/_app/settings/personal': typeof AppSettingsPersonalRoute
   '/_app/settings/import-export': typeof AppSettingsImportExportRoute
   '/_app/settings/server': typeof AppSettingsServerRoute
   '/_app/settings/you': typeof AppSettingsYouRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/recipes/new'
     | '/recipes/review'
     | '/settings/household'
+    | '/settings/personal'
     | '/settings/import-export'
     | '/settings/server'
     | '/settings/you'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/recipes/new'
     | '/recipes/review'
     | '/settings/household'
+    | '/settings/personal'
     | '/settings/import-export'
     | '/settings/server'
     | '/settings/you'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/_app/recipes/new'
     | '/_app/recipes/review'
     | '/_app/settings/household'
+    | '/_app/settings/personal'
     | '/_app/settings/import-export'
     | '/_app/settings/server'
     | '/_app/settings/you'
@@ -690,6 +702,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsHouseholdRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/personal': {
+      id: '/_app/settings/personal'
+      path: '/personal'
+      fullPath: '/settings/personal'
+      preLoaderRoute: typeof AppSettingsPersonalRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/import-export': {
       id: '/_app/settings/import-export'
       path: '/import-export'
@@ -779,6 +798,7 @@ declare module '@tanstack/react-router' {
 
 interface AppSettingsRouteChildren {
   AppSettingsHouseholdRoute: typeof AppSettingsHouseholdRoute
+  AppSettingsPersonalRoute: typeof AppSettingsPersonalRoute
   AppSettingsImportExportRoute: typeof AppSettingsImportExportRoute
   AppSettingsServerRoute: typeof AppSettingsServerRoute
   AppSettingsYouRoute: typeof AppSettingsYouRoute
@@ -787,6 +807,7 @@ interface AppSettingsRouteChildren {
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsHouseholdRoute: AppSettingsHouseholdRoute,
+  AppSettingsPersonalRoute: AppSettingsPersonalRoute,
   AppSettingsImportExportRoute: AppSettingsImportExportRoute,
   AppSettingsServerRoute: AppSettingsServerRoute,
   AppSettingsYouRoute: AppSettingsYouRoute,

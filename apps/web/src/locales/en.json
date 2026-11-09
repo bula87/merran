@@ -1048,6 +1048,49 @@
         "fromMealie_other": "{{count}} from Mealie are here already, so they're skipped.",
         "change": "Change"
       }
+    },
+    "personal": {
+      "tab": "Personal",
+      "group": {
+        "title": "About you",
+        "description": "Personal details and preferences used to plan meals that fit you."
+      },
+      "title": "Personal profile",
+      "description": "Age, body details, food preferences, meal schedule, cooking devices, and your goal. Merran can use this later when preparing weekly meal plans.",
+      "saved": "Personal profile saved",
+      "add": "Add",
+      "remove": "Remove {{item}}",
+      "age": "Age",
+      "agePlaceholder": "Years",
+      "weight": "Weight (kg)",
+      "height": "Height (cm)",
+      "allergies": "Allergies",
+      "allergiesDescription": "Foods that cause allergic reactions.",
+      "favoriteFoods": "Favorite foods",
+      "dislikedFoods": "Disliked foods",
+      "foodPlaceholder": "Type a food and press Enter",
+      "mealsPerDay": "Meals per day",
+      "mealsPerDayDescription": "Select the meals you usually have.",
+      "mealSlots": {
+        "breakfast": "Breakfast",
+        "morning-snack": "Mid-morning snack",
+        "lunch": "Lunch",
+        "afternoon-snack": "Afternoon snack",
+        "dinner": "Dinner"
+      },
+      "cookingDevices": "Additional cooking devices",
+      "devices": {
+        "mixer-thermomix": "Mixer / Thermomix",
+        "air-fryer": "Air fryer"
+      },
+      "goal": "Goal",
+      "goalPlaceholder": "Select a goal",
+      "goalNone": "No goal selected",
+      "goals": {
+        "weight-loss": "Weight loss",
+        "more-energy": "More energy",
+        "better-eating-habits": "Better eating habits"
+      }
     }
   },
   "plan": {

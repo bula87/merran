@@ -880,6 +880,110 @@
           "dismissed": false
         }
       },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 130
+          },
+          "weightKg": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 500
+          },
+          "heightCm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 30,
+            "maximum": 300
+          },
+          "allergies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "maxItems": 50
+          },
+          "favoriteFoods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "maxItems": 50
+          },
+          "dislikedFoods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "maxItems": 50
+          },
+          "mealsPerDay": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "breakfast",
+                "morning-snack",
+                "lunch",
+                "afternoon-snack",
+                "dinner"
+              ]
+            },
+            "maxItems": 5
+          },
+          "cookingDevices": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mixer-thermomix",
+                "air-fryer"
+              ]
+            },
+            "maxItems": 10
+          },
+          "goal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "weight-loss",
+              "more-energy",
+              "better-eating-habits",
+              null
+            ]
+          }
+        },
+        "required": [
+          "age",
+          "weightKg",
+          "heightCm",
+          "allergies",
+          "favoriteFoods",
+          "dislikedFoods",
+          "mealsPerDay",
+          "cookingDevices",
+          "goal"
+        ]
+      },
       "MyData": {
         "type": "object",
         "properties": {
@@ -18298,6 +18402,108 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Onboarding"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me/profile": {
+      "get": {
+        "operationId": "getMyProfile",
+        "tags": [
+          "Sign-in"
+        ],
+        "summary": "Get your personal profile",
+        "description": "Your personal details and preferences used for meal planning, such as physical data, food preferences, meals, cooking devices, and goals.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Your profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateMyProfile",
+        "tags": [
+          "Sign-in"
+        ],
+        "summary": "Update your personal profile",
+        "description": "Saves your personal details and preferences for future meal planning.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserProfile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
                 }
               }
             }
