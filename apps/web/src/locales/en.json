@@ -6,6 +6,7 @@
     "main": "Main",
     "today": "Today",
     "recipes": "Recipes",
+    "photo": "Photo",
     "plan": "Plan",
     "list": "List",
     "pantry": "Pantry",
@@ -1870,6 +1871,45 @@
     "onSaleHint": "Recipes that use something on sale at {{store}}",
     "perServing": "{{price}} a serving"
   },
+  "photo": {
+    "title": "Photo",
+    "description": "Take or upload a photo, then choose what to do with it.",
+    "choose": "Choose a photo",
+    "camera": "Take a photo",
+    "remove": "Remove photo",
+    "preview": "Selected photo",
+    "change": "Choose a different photo",
+    "addRecipe": {
+      "title": "Add as recipe",
+      "description": "Read a recipe from a cookbook page, card or screenshot.",
+      "action": "Add as recipe",
+      "working": "Reading the recipe…",
+      "added": "Recipe added."
+    },
+    "analyze": {
+      "title": "Analyze nutrition & calories",
+      "description": "Estimate calories and nutrition for the meal in the photo.",
+      "action": "Analyze meal",
+      "working": "Analyzing the meal…",
+      "result": "Estimated nutrition",
+      "confidence": {
+        "low": "Low confidence",
+        "medium": "Medium confidence",
+        "high": "High confidence"
+      },
+      "perServing": "For {{serving}}",
+      "notes": "Notes",
+      "disclaimer": "This is an estimate from the photo, not a nutrition label."
+    },
+    "log": {
+      "title": "Add to meal & nutrition log",
+      "description": "Save this meal to your daily food and nutrition tracking.",
+      "action": "Coming soon",
+      "soon": "Meal and nutrition tracking is coming in a future update."
+    },
+    "noPhoto": "Choose or take a photo first.",
+    "error": "Something went wrong. Try again."
+  },
   "cook": {
     "exit": "Exit",
     "servings": "Servings",
@@ -3068,6 +3108,12 @@
       "translate": {
         "noKey": "Translating recipes needs AI, and this household has no AI key yet.",
         "notCovered": "Translating recipes needs AI, and this household has no AI key yet.",
+        "overLimit": "This month's AI on the server's keys is used up. It's back next month.",
+        "ownLimit": "This month's limit on the household's own AI keys is reached."
+      },
+      "nutrition": {
+        "noKey": "Analyzing meal photos needs AI, and this household has no AI key yet.",
+        "notCovered": "Analyzing meal photos needs AI, and this household has no AI key yet.",
         "overLimit": "This month's AI on the server's keys is used up. It's back next month.",
         "ownLimit": "This month's limit on the household's own AI keys is reached."
       }

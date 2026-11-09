@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppPhotoRouteImport } from './routes/_app/photo'
 import { Route as AppPlanRouteImport } from './routes/_app/plan'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppShareRouteImport } from './routes/_app/share'
@@ -84,6 +85,11 @@ const VerifyRoute = VerifyRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPhotoRoute = AppPhotoRouteImport.update({
+  id: '/photo',
+  path: '/photo',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlanRoute = AppPlanRouteImport.update({
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/verify': typeof VerifyRoute
+  '/photo': typeof AppPhotoRoute
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/share': typeof AppShareRoute
@@ -285,6 +292,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/verify': typeof VerifyRoute
+  '/photo': typeof AppPhotoRoute
   '/plan': typeof AppPlanRoute
   '/share': typeof AppShareRoute
   '/authorize/household': typeof AuthorizeHouseholdRoute
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/verify': typeof VerifyRoute
+  '/_app/photo': typeof AppPhotoRoute
   '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/share': typeof AppShareRoute
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/verify'
+    | '/photo'
     | '/plan'
     | '/settings'
     | '/share'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/verify'
+    | '/photo'
     | '/plan'
     | '/share'
     | '/authorize/household'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/verify'
+    | '/_app/photo'
     | '/_app/plan'
     | '/_app/settings'
     | '/_app/share'
@@ -543,6 +555,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/photo': {
+      id: '/_app/photo'
+      path: '/photo'
+      fullPath: '/photo'
+      preLoaderRoute: typeof AppPhotoRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/plan': {
@@ -779,6 +798,7 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppPhotoRoute: typeof AppPhotoRoute
   AppPlanRoute: typeof AppPlanRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppShareRoute: typeof AppShareRoute
@@ -803,6 +823,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppPhotoRoute: AppPhotoRoute,
   AppPlanRoute: AppPlanRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppShareRoute: AppShareRoute,

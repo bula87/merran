@@ -6,6 +6,7 @@
     "main": "Główne",
     "today": "Dzisiaj",
     "recipes": "Przepisy",
+    "photo": "Zdjęcie",
     "plan": "Plan",
     "list": "Lista",
     "pantry": "Spiżarnia",
@@ -1998,6 +1999,45 @@
     "onSaleHint": "Przepisy wykorzystujące coś w promocji w {{store}}",
     "perServing": "{{price}} za porcję"
   },
+  "photo": {
+    "title": "Zdjęcie",
+    "description": "Zrób lub wybierz zdjęcie, a potem wybierz, co chcesz z nim zrobić.",
+    "choose": "Wybierz zdjęcie",
+    "camera": "Zrób zdjęcie",
+    "remove": "Usuń zdjęcie",
+    "preview": "Wybrane zdjęcie",
+    "change": "Wybierz inne zdjęcie",
+    "addRecipe": {
+      "title": "Dodaj jako przepis",
+      "description": "Odczytaj przepis ze strony książki kucharskiej, karty lub zrzutu ekranu.",
+      "action": "Dodaj jako przepis",
+      "working": "Odczytywanie przepisu…",
+      "added": "Dodano przepis."
+    },
+    "analyze": {
+      "title": "Analizuj wartości odżywcze i kalorie",
+      "description": "Oszacuj kalorie i wartości odżywcze posiłku ze zdjęcia.",
+      "action": "Analizuj posiłek",
+      "working": "Analizowanie posiłku…",
+      "result": "Szacowane wartości odżywcze",
+      "confidence": {
+        "low": "Niska pewność",
+        "medium": "Średnia pewność",
+        "high": "Wysoka pewność"
+      },
+      "perServing": "Dla: {{serving}}",
+      "notes": "Uwagi",
+      "disclaimer": "To szacunek na podstawie zdjęcia, nie etykieta wartości odżywczych."
+    },
+    "log": {
+      "title": "Dodaj do dziennika posiłków i odżywiania",
+      "description": "Zapisz ten posiłek w dziennym śledzeniu jedzenia i wartości odżywczych.",
+      "action": "Wkrótce",
+      "soon": "Śledzenie posiłków i odżywiania pojawi się w przyszłej aktualizacji."
+    },
+    "noPhoto": "Najpierw wybierz lub zrób zdjęcie.",
+    "error": "Coś poszło nie tak. Spróbuj ponownie."
+  },
   "cook": {
     "exit": "Wyjdź",
     "servings": "Porcje",
@@ -3346,6 +3386,12 @@
       "translate": {
         "noKey": "Tłumaczenie przepisów wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
         "notCovered": "Tłumaczenie przepisów wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
+        "overLimit": "Miesięczny limit AI na kluczach serwera został wykorzystany. Odnowi się w przyszłym miesiącu.",
+        "ownLimit": "Miesięczny limit na własnych kluczach AI gospodarstwa domowego został osiągnięty."
+      },
+      "nutrition": {
+        "noKey": "Analiza zdjęć posiłków wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
+        "notCovered": "Analiza zdjęć posiłków wymaga AI, a to gospodarstwo domowe nie ma jeszcze klucza AI.",
         "overLimit": "Miesięczny limit AI na kluczach serwera został wykorzystany. Odnowi się w przyszłym miesiącu.",
         "ownLimit": "Miesięczny limit na własnych kluczach AI gospodarstwa domowego został osiągnięty."
       }

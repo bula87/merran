@@ -17,6 +17,7 @@ type Task =
   | "discover"
   | "receipts"
   | "translate"
+  | "nutrition"
 
 /**
  * Whether the household can use AI for a task, and if not, why. Undefined

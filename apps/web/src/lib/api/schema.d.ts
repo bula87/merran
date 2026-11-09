@@ -1689,6 +1689,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/nutrition/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze a meal photo
+         * @description Estimates calories and nutrition from a photo of a meal. The result is an estimate for the serving shown. With an API key, it needs the `recipes: write` permission.
+         */
+        post: operations["analyzeMealPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pantry": {
         parameters: {
             query?: never;
@@ -8220,6 +8240,38 @@ export interface components {
          */
         UsualSkip: {
             food: string;
+        };
+        /**
+         * @description Estimated nutrition for the meal shown in the photo. Values are per serving as shown; unknown values are left out.
+         * @example {
+         *       "name": "Chicken salad",
+         *       "description": "Grilled chicken, mixed greens, tomatoes and dressing.",
+         *       "serving": "1 plate",
+         *       "confidence": "medium",
+         *       "calories": 420,
+         *       "protein": 34,
+         *       "carbs": 18,
+         *       "fat": 24,
+         *       "fiber": 4,
+         *       "sugar": 6,
+         *       "sodium": 680,
+         *       "notes": "Dressing amount is uncertain."
+         *     }
+         */
+        MealPhotoAnalysis: {
+            name: string | null;
+            description: string | null;
+            serving: string | null;
+            /** @enum {string|null} */
+            confidence: "low" | "medium" | "high" | null;
+            calories?: number;
+            protein?: number;
+            carbs?: number;
+            fat?: number;
+            fiber?: number;
+            sugar?: number;
+            sodium?: number;
+            notes: string | null;
         };
         /**
          * @example {
@@ -18026,6 +18078,87 @@ export interface operations {
             };
             /** @description Someone changed it since. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    analyzeMealPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    photo?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The estimated nutrition. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MealPhotoAnalysis"];
+                };
+            };
+            /** @description No photo, or the photo couldn't be read. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description The photo is too large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No meal found, or nutrition couldn't be estimated. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description The AI provider failed. */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

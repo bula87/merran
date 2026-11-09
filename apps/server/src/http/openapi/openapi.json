@@ -7017,6 +7017,90 @@
           "food": "milk"
         }
       },
+      "MealPhotoAnalysis": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "serving": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              null
+            ]
+          },
+          "calories": {
+            "type": "number"
+          },
+          "protein": {
+            "type": "number"
+          },
+          "carbs": {
+            "type": "number"
+          },
+          "fat": {
+            "type": "number"
+          },
+          "fiber": {
+            "type": "number"
+          },
+          "sugar": {
+            "type": "number"
+          },
+          "sodium": {
+            "type": "number"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "serving",
+          "confidence",
+          "notes"
+        ],
+        "description": "Estimated nutrition for the meal shown in the photo. Values are per serving as shown; unknown values are left out.",
+        "example": {
+          "name": "Chicken salad",
+          "description": "Grilled chicken, mixed greens, tomatoes and dressing.",
+          "serving": "1 plate",
+          "confidence": "medium",
+          "calories": 420,
+          "protein": 34,
+          "carbs": 18,
+          "fat": 24,
+          "fiber": 4,
+          "sugar": 6,
+          "sodium": 680,
+          "notes": "Dressing amount is uncertain."
+        }
+      },
       "Pantry": {
         "type": "object",
         "properties": {
@@ -23514,6 +23598,115 @@
           },
           "409": {
             "description": "Someone changed it since.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nutrition/photo": {
+      "post": {
+        "operationId": "analyzeMealPhoto",
+        "tags": [
+          "Nutrition"
+        ],
+        "summary": "Analyze a meal photo",
+        "description": "Estimates calories and nutrition from a photo of a meal. The result is an estimate for the serving shown. With an API key, it needs the `recipes: write` permission.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          }
+        ],
+        "x-merran-permission": "recipes:write",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The estimated nutrition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPhotoAnalysis"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No photo, or the photo couldn't be read.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The photo is too large.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No meal found, or nutrition couldn't be estimated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The AI provider failed.",
             "content": {
               "application/json": {
                 "schema": {

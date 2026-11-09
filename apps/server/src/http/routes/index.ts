@@ -9,6 +9,7 @@ import eventsRoutes from "./events/index.ts"
 import healthRoutes from "./health/index.ts"
 import householdsRoutes from "./households/index.ts"
 import listRoutes from "./list/index.ts"
+import nutritionRoutes from "./nutrition/index.ts"
 import pantryRoutes from "./pantry/index.ts"
 import planRoutes from "./plan/index.ts"
 import proposalsRoutes from "./proposals/index.ts"
@@ -35,6 +36,7 @@ export default (router: Router, deps: AppDeps) => {
   healthRoutes(router, deps)
   householdsRoutes(router, deps)
   listRoutes(router, deps)
+  nutritionRoutes(router, deps)
   pantryRoutes(router, deps)
   planRoutes(router, deps)
   proposalsRoutes(router, deps)

@@ -1,5 +1,6 @@
 import {
   Calendar03Icon,
+  Camera01Icon,
   CookBookIcon,
   FridgeIcon,
   Home01Icon,
@@ -10,6 +11,7 @@ import {
 export const PRIMARY_NAV = [
   { to: "/", labelKey: "nav.today", icon: Home01Icon },
   { to: "/recipes", labelKey: "nav.recipes", icon: CookBookIcon },
+  { to: "/photo", labelKey: "nav.photo", icon: Camera01Icon },
   { to: "/plan", labelKey: "nav.plan", icon: Calendar03Icon },
   { to: "/list", labelKey: "nav.list", icon: ShoppingBasket01Icon },
   { to: "/pantry", labelKey: "nav.pantry", icon: FridgeIcon },
