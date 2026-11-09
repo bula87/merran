@@ -1,20 +1,11 @@
 import {
   addDays,
-  checkTastes,
   clockIn,
   dayOfWeek,
-  fitsTheme,
-  missingDiets,
-  NO_TASTES,
   NO_THEMES,
-  reasonsFor,
   themeLabel,
-  WEEKNIGHTS,
-  type Diet,
-  type IngredientMark,
   type Meal,
   type NightTheme,
-  type Reason,
 } from "@merran/shared"
 import type { EntityManager } from "@mikro-orm/sql"
 import {
@@ -26,144 +17,21 @@ import {
 import { z } from "zod"
 
 import { AppError } from "../../core/errors.ts"
-import { toNumber } from "../../database/numbers.ts"
-import {
-  Household,
-  PlanEntry,
-  Recipe,
-  RecipeIngredient,
-} from "../../database/entities/index.ts"
+import { Household } from "../../database/entities/index.ts"
 import type { UserProfile } from "../../http/schemas/user-profile.ts"
-import { decodeDiets } from "../recipes/diet-labels.ts"
-import { photoUrls } from "../recipes/photos/photos.ts"
-import { totalMinutes } from "../recipes/recipes.ts"
-import { tagKey, tagsOf } from "../recipes/tags.ts"
 import { resolveTask } from "../ai/status.ts"
 import { useAi, type AiDeps } from "../ai/run.ts"
-import type { Slot, Suggestion } from "./suggest.ts"
+import {
+  rankCandidates,
+  type RankedCandidate,
+  type Slot,
+  type Suggestion,
+} from "./suggest.ts"
 
-const NO_REPEAT_DAYS = 14
-
-const MEAL_TAGS: Record<Meal, string[]> = {
-  breakfast: ["breakfast", "brunch"],
-  "morning-snack": ["snack", "breakfast", "brunch", "smoothie", "fruit"],
-  lunch: ["lunch", "salad", "sandwich", "soup"],
-  "afternoon-snack": ["snack", "appetizer", "dessert", "smoothie", "fruit"],
-  dinner: ["dinner", "main", "main course", "main dish", "entree", "supper"],
-}
-
-const PART_TAGS = [
-  "sauce",
-  "sauces",
-  "dressing",
-  "dressings",
-  "condiment",
-  "condiments",
-  "marinade",
-  "seasoning",
-  "spice blend",
-  "spice mix",
-  "glaze",
-  "frosting",
-  "topping",
-]
-
-type Candidate = {
-  id: string
-  slug: string
-  name: string
-  photo: string | null
-  servings: number | null
-  totalMinutes: number | null
-  rating: number | null
-  lastMadeAt: Date | null
-  tags: string[]
-  diets: Diet[]
-  lines: string[]
-  marks: (IngredientMark | null)[]
-  needs: string[]
-  calories: number | null
-  nutrition: {
-    calories: number | null
-    protein: number | null
-    carbs: number | null
-    fat: number | null
-    fiber: number | null
-    sugar: number | null
-    sodium: number | null
-  } | null
-}
-
-function fitsMeal(recipe: Candidate, meal: Meal) {
-  if (MEAL_TAGS[meal].some((tag) => recipe.tags.includes(tag))) return true
-  if (meal !== "dinner") return false
-  const other = [
-    ...MEAL_TAGS.breakfast,
-    ...MEAL_TAGS["morning-snack"],
-    ...MEAL_TAGS["afternoon-snack"],
-    "drink",
-    "cocktail",
-    "beverage",
-  ]
-  return !other.some((tag) => recipe.tags.includes(tag))
-}
-
-const isWeeknightDinner = (slot: Slot) =>
-  slot.meal === "dinner" && WEEKNIGHTS.includes(dayOfWeek(slot.date))
-
-const dish = (name: string) =>
-  name
-    .replace(/\s*\([^)]*\)\s*$/, "")
-    .trim()
-    .toLowerCase()
-
-async function candidates(em: EntityManager): Promise<Candidate[]> {
-  const recipes = await em.find(Recipe, {})
-  const ids = recipes.map((recipe) => recipe.id)
-  const tags = await tagsOf(em, ids)
-  const lines = new Map<string, RecipeIngredient[]>()
-  if (ids.length > 0) {
-    for (const line of await em.find(
-      RecipeIngredient,
-      { recipe: { $in: ids } },
-      { orderBy: { position: "asc" } }
-    )) {
-      const list = lines.get(line.recipe.id)
-      if (list) list.push(line)
-      else lines.set(line.recipe.id, [line])
-    }
-  }
-  return recipes.map((recipe) => {
-    const nutrition = recipe.nutrition
-    return {
-      id: recipe.id,
-      slug: recipe.slug,
-      name: recipe.name,
-      photo: photoUrls(recipe)?.card ?? null,
-      servings: toNumber(recipe.servings),
-      totalMinutes: totalMinutes(recipe),
-      rating: toNumber(recipe.rating),
-      lastMadeAt: recipe.lastMadeAt ?? null,
-      tags: (tags.get(recipe.id) ?? []).map(tagKey),
-      diets: decodeDiets(recipe.diets),
-      lines: (lines.get(recipe.id) ?? []).map((line) => line.rawText),
-      marks: (lines.get(recipe.id) ?? []).map((line) => line.mark ?? null),
-      needs: recipe.needs ?? [],
-      calories: nutrition?.calories ?? null,
-      nutrition: nutrition
-        ? {
-            calories: nutrition.calories ?? null,
-            protein: nutrition.protein ?? null,
-            carbs: nutrition.carbs ?? null,
-            fat: nutrition.fat ?? null,
-            fiber: nutrition.fiber ?? null,
-            sugar: nutrition.sugar ?? null,
-            sodium: nutrition.sodium ?? null,
-          }
-        : null,
-    }
-  })
-}
+// AI Fill the week: algorithmic candidates (tastes, pantry, themes, budget
+// signals, recency) narrowed to a small set per slot, then AI picks the
+// best fit for the user's profile and day-level calorie target. Day by day,
+// one AI request at a time, with a small prompt.
 
 const AiPick = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -178,13 +46,14 @@ const AiPick = z.object({
 })
 
 const AiPlan = z.object({
-  suggestions: z.array(AiPick).max(56),
+  suggestions: z.array(AiPick).max(12),
 })
 
 export type AiSuggestStatus = "requesting_large_model" | "fallback_small_model"
 
 const LARGE_MODEL_TIMEOUT_MS = 6 * 60 * 1000
 const SMALL_MODEL_TIMEOUT_MS = 3 * 60 * 1000
+const CANDIDATES_PER_SLOT = 10
 
 function isTimeoutError(error: unknown) {
   return (
@@ -192,6 +61,95 @@ function isTimeoutError(error: unknown) {
     (error instanceof Error && error.name === "TimeoutError")
   )
 }
+
+function friendlyError(error: unknown): never {
+  if (error instanceof AppError) throw error
+  if (
+    NoOutputGeneratedError.isInstance(error) ||
+    NoObjectGeneratedError.isInstance(error)
+  ) {
+    throw new AppError(
+      "upstream",
+      "ai_answer_unreadable",
+      "The AI's answer couldn't be read. Try again, or pick another model in Settings, Household, AI."
+    )
+  }
+  throw error
+}
+
+function parsePlanText(text: string): z.infer<typeof AiPlan> | null {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  const candidates = [
+    fenced?.[1]?.trim(),
+    trimmed,
+    trimmed.match(/\{[\s\S]*\}/)?.[0],
+  ].filter((value): value is string => !!value)
+  for (const candidate of candidates) {
+    try {
+      const parsed = AiPlan.safeParse(JSON.parse(candidate))
+      if (parsed.success) return parsed.data
+    } catch {
+      // try the next candidate
+    }
+  }
+  return null
+}
+
+function salvagePlan(result: unknown): z.infer<typeof AiPlan> | null {
+  if (!result || typeof result !== "object") return null
+  const r = result as Record<string, unknown>
+  for (const key of ["text", "reasoningText"] as const) {
+    const value = r[key]
+    if (typeof value === "string") {
+      const parsed = parsePlanText(value)
+      if (parsed) return parsed
+    }
+  }
+  const response = r.response
+  if (response && typeof response === "object") {
+    const body = (response as Record<string, unknown>).body
+    if (body && typeof body === "object") {
+      const choices = (body as Record<string, unknown>).choices
+      if (Array.isArray(choices)) {
+        for (const choice of choices) {
+          if (!choice || typeof choice !== "object") continue
+          const message = (choice as Record<string, unknown>).message
+          if (!message || typeof message !== "object") continue
+          const msg = message as Record<string, unknown>
+          for (const key of ["content", "reasoning_content"] as const) {
+            const value = msg[key]
+            if (typeof value === "string") {
+              const parsed = parsePlanText(value)
+              if (parsed) return parsed
+            }
+          }
+        }
+      }
+    }
+  }
+  return null
+}
+
+function themeOf(
+  slot: Slot,
+  themes: Partial<Record<number, NightTheme | null>>
+): NightTheme | null {
+  return slot.meal === "dinner" ? (themes[dayOfWeek(slot.date)] ?? null) : null
+}
+
+function byDate(slots: readonly Slot[]) {
+  const out = new Map<string, Slot[]>()
+  for (const slot of slots) {
+    const list = out.get(slot.date)
+    if (list) list.push(slot)
+    else out.set(slot.date, [{ ...slot }])
+  }
+  return [...out.entries()].sort(([a], [b]) => a.localeCompare(b))
+}
+
+type SlotCandidates = { slot: Slot; candidates: RankedCandidate[] }
 
 export async function aiSuggestMeals(
   deps: AiDeps,
@@ -206,143 +164,122 @@ export async function aiSuggestMeals(
     maxCaloriesPerDay?: number
     /** Progress updates for long-running AI requests (e.g. model fallback). */
     onStatus?: (status: AiSuggestStatus) => void | Promise<void>
+    /** Slots completed, for background job progress. */
+    onProgress?: (done: number, total: number) => void | Promise<void>
     /** Cancel in-flight AI work, e.g. when a background job is stopped. */
     signal?: AbortSignal
   }
 ): Promise<Suggestion[]> {
   if (options.slots.length === 0) return []
   const maxCaloriesPerDay = options.maxCaloriesPerDay ?? 2000
-  const profile = options.profile
+  const household = await em.findOne(Household, { id: options.householdId })
+  const themes = household?.settings?.themes ?? NO_THEMES
+  const exclude = [...(options.exclude ?? [])]
+  const chosen: Suggestion[] = []
+  let done = 0
 
-  const household = await em.findOneOrFail(Household, {
-    id: options.householdId,
-  })
-  const tastes = { ...NO_TASTES, ...household.settings?.tastes }
-  const themes = household.settings?.themes ?? NO_THEMES
-  const { today } = clockIn(household.timeZone)
+  for (const [date, daySlots] of byDate(options.slots)) {
+    if (options.signal?.aborted)
+      throw options.signal.reason ?? new Error("Aborted")
 
-  const recipes = await candidates(em)
-  const byId = new Map(recipes.map((recipe) => [recipe.id, recipe]))
-
-  const dates = options.slots.map((slot) => slot.date).sort()
-  const nearby = await em.find(PlanEntry, {
-    date: {
-      $gte: addDays(dates[0]!, -NO_REPEAT_DAYS),
-      $lte: addDays(dates.at(-1)!, NO_REPEAT_DAYS),
-    },
-    status: { $ne: "skipped" },
-  })
-  const used = new Set<string>(
-    [
-      ...(options.exclude ?? []),
-      ...nearby.flatMap((entry) => (entry.recipe ? [entry.recipe.id] : [])),
-    ]
-      .map((id) => byId.get(id))
-      .filter((recipe) => recipe !== undefined)
-      .map((recipe) => dish(recipe.name))
-  )
-  const madeLately = new Date(
-    new Date(`${today}T00:00:00Z`).getTime() - NO_REPEAT_DAYS * 86_400_000
-  )
-
-  const checks = new Map(
-    recipes.map((recipe) => [recipe.id, checkTastes(recipe, tastes.avoid)])
-  )
-  const ruledOut = new Set(
-    recipes
-      .filter(
-        (recipe) =>
-          missingDiets(recipe.diets, tastes.diets).length > 0 ||
-          (checks.get(recipe.id)?.ruledOut.length ?? 0) > 0
-      )
-      .map((recipe) => recipe.id)
-  )
-  const isPart = (recipe: Candidate) =>
-    recipe.tags.some((tag) => PART_TAGS.includes(tag))
-  const tooLong = (recipe: Candidate, slot: Slot) =>
-    tastes.weeknightMinutes !== null &&
-    isWeeknightDinner(slot) &&
-    recipe.totalMinutes !== null &&
-    recipe.totalMinutes > tastes.weeknightMinutes
-  const themeOf = (slot: Slot): NightTheme | null =>
-    slot.meal === "dinner" ? (themes[dayOfWeek(slot.date)] ?? null) : null
-
-  function allowedFor(slot: Slot) {
-    const theme = themeOf(slot)
-    return recipes.filter((recipe) => {
-      if (ruledOut.has(recipe.id) || isPart(recipe)) return false
-      if (used.has(dish(recipe.name))) return false
-      if (recipe.lastMadeAt && recipe.lastMadeAt > madeLately) return false
-      if (!fitsMeal(recipe, slot.meal)) return false
-      if (tooLong(recipe, slot)) return false
-      if (theme?.kind === "skip") return false
-      // Theme fit is a preference for AI; hard-skip only for "skip" nights.
-      return true
+    const ranked = await rankCandidates(em, options.householdId, daySlots, {
+      exclude,
+      limit: CANDIDATES_PER_SLOT,
     })
+
+    const slotCandidates: SlotCandidates[] = daySlots.map((slot) => ({
+      slot,
+      candidates: ranked.get(`${slot.date}:${slot.meal}`) ?? [],
+    }))
+    if (slotCandidates.every((s) => s.candidates.length === 0)) {
+      done += daySlots.length
+      await options.onProgress?.(done, options.slots.length)
+      continue
+    }
+
+    const daySuggestions = await chooseForDay(deps, em, {
+      householdId: options.householdId,
+      userId: options.userId,
+      date,
+      maxCaloriesPerDay,
+      profile: options.profile,
+      themes,
+      slotCandidates,
+      onStatus: options.onStatus,
+      signal: options.signal,
+    })
+
+    for (const suggestion of daySuggestions) {
+      chosen.push(suggestion)
+      exclude.push(suggestion.recipe.id)
+    }
+    done += daySlots.length
+    await options.onProgress?.(done, options.slots.length)
   }
 
-  const allowedBySlot = new Map(
-    options.slots.map((slot) => [`${slot.date}:${slot.meal}`, allowedFor(slot)])
-  )
-  // Compact pool for the prompt: union of allowed candidates, capped.
-  const poolIds = new Set<string>()
-  for (const list of allowedBySlot.values())
-    for (const r of list) poolIds.add(r.id)
-  const pool = recipes
-    .filter((r) => poolIds.has(r.id))
-    .sort(
-      (a, b) =>
-        (b.rating ?? 0) - (a.rating ?? 0) || a.name.localeCompare(b.name)
-    )
-    .slice(0, 140)
-    .map((r) => ({
-      id: r.id,
-      n: r.name,
-      cal: r.calories,
-      p: r.nutrition?.protein ?? null,
-      c: r.nutrition?.carbs ?? null,
-      f: r.nutrition?.fat ?? null,
-      tags: r.tags.slice(0, 6),
-      min: r.totalMinutes,
-    }))
-  const poolSet = new Set(pool.map((r) => r.id))
+  return chosen
+}
 
-  const slotPayload = options.slots.map((slot) => ({
-    date: slot.date,
-    meal: slot.meal,
-    day: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
-      dayOfWeek(slot.date)
-    ],
-    theme:
-      themeOf(slot) && themeOf(slot)!.kind !== "skip"
-        ? themeLabel(themeOf(slot)!)
-        : themeOf(slot)?.kind === "skip"
-          ? "skip"
-          : null,
-    allowed: (allowedBySlot.get(`${slot.date}:${slot.meal}`) ?? [])
-      .filter((r) => poolSet.has(r.id))
-      .map((r) => r.id)
-      .slice(0, 50),
-  }))
+async function chooseForDay(
+  deps: AiDeps,
+  em: EntityManager,
+  options: {
+    householdId: string
+    userId: string | null
+    date: string
+    maxCaloriesPerDay: number
+    profile: UserProfile
+    themes: Partial<Record<number, NightTheme | null>>
+    slotCandidates: SlotCandidates[]
+    onStatus?: (status: AiSuggestStatus) => void | Promise<void>
+    signal?: AbortSignal
+  }
+): Promise<Suggestion[]> {
+  const pickable = options.slotCandidates.filter((s) => s.candidates.length > 0)
+  if (pickable.length === 0) return []
 
-  const system = `Plan weekly meals. Pick one recipeId per slot from that slot's "allowed" IDs (must exist in recipes). Respect allergies, diets, dislikes, theme nights. Prefer liked foods and goal. Aim for ~${maxCaloriesPerDay} kcal/day when calories (cal) are known. Do not repeat recipes. Return only JSON matching the schema: {"suggestions":[{"date":"YYYY-MM-DD","meal":"breakfast|morning-snack|lunch|afternoon-snack|dinner","recipeId":"..."}]}.`
+  const candidateById = new Map<string, RankedCandidate>()
+  for (const { candidates } of pickable)
+    for (const c of candidates) candidateById.set(c.id, c)
+
+  const system = `Choose meals for one day from the pre-filtered candidates provided for each slot. Candidates already respect household tastes, diets, theme nights, and recently used meals. Pick exactly one recipeId per slot that has candidates, using only IDs from that slot's candidates. Consider the user's profile (allergies, dislikes, favorites, goal, cooking devices) and aim for about ${options.maxCaloriesPerDay} kcal total for the day when calories are known. Return only a single JSON object, with no reasoning, no explanation, and no markdown fences: {"suggestions":[{"date":"YYYY-MM-DD","meal":"breakfast|morning-snack|lunch|afternoon-snack|dinner","recipeId":"..."}]}.`
 
   const prompt = JSON.stringify({
-    maxCaloriesPerDay,
+    date: options.date,
+    day: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+      dayOfWeek(options.date)
+    ],
+    maxCaloriesPerDay: options.maxCaloriesPerDay,
     userProfile: {
-      goal: profile.goal,
-      allergies: profile.allergies,
-      favoriteFoods: profile.favoriteFoods,
-      dislikedFoods: profile.dislikedFoods,
-      mealsPerDay: profile.mealsPerDay,
-      cookingDevices: profile.cookingDevices,
+      goal: options.profile.goal,
+      allergies: options.profile.allergies,
+      favoriteFoods: options.profile.favoriteFoods,
+      dislikedFoods: options.profile.dislikedFoods,
+      mealsPerDay: options.profile.mealsPerDay,
+      cookingDevices: options.profile.cookingDevices,
     },
-    household: {
-      diets: tastes.diets,
-      weeknightMaxMin: tastes.weeknightMinutes,
-    },
-    slots: slotPayload,
-    recipes: pool,
+    slots: pickable.map(({ slot, candidates }) => ({
+      date: slot.date,
+      meal: slot.meal,
+      theme:
+        themeOf(slot, options.themes) &&
+        themeOf(slot, options.themes)!.kind !== "skip"
+          ? themeLabel(themeOf(slot, options.themes)!)
+          : themeOf(slot, options.themes)?.kind === "skip"
+            ? "skip"
+            : null,
+      candidates: candidates.map((c) => ({
+        id: c.id,
+        name: c.name,
+        cal: c.calories,
+        p: c.protein,
+        c: c.carbs,
+        f: c.fat,
+        min: c.totalMinutes,
+        tags: c.tags,
+        why: c.why.map((r) => ("label" in r ? `${r.kind}:${r.label}` : r.kind)),
+      })),
+    })),
   })
 
   async function run(modelRef: string | undefined, timeoutMs: number) {
@@ -360,12 +297,20 @@ export async function aiSuggestMeals(
         needs: ["structured"],
         modelRef,
         aiLog: {
-          input: { slotCount: options.slots.length, poolSize: pool.length },
+          input: {
+            date: options.date,
+            slotCount: pickable.length,
+            candidateCount: pickable.reduce(
+              (n, s) => n + s.candidates.length,
+              0
+            ),
+          },
           rawRequest: { system, prompt },
         },
       },
-      (model) =>
-        generateText({
+      (model, extras) => {
+        const nemotron = /nemotron/i.test(extras.target.model)
+        return generateText({
           model,
           system,
           prompt,
@@ -373,12 +318,36 @@ export async function aiSuggestMeals(
             schema: AiPlan,
             name: "meal_plan_suggestions",
           }),
-          maxOutputTokens: 8000,
+          maxOutputTokens: 4000,
           temperature: 0,
           abortSignal: signal,
+          ...(nemotron
+            ? {
+                providerOptions: {
+                  address: {
+                    chat_template_kwargs: { enable_thinking: false },
+                  },
+                  openaiCompatible: {
+                    chat_template_kwargs: { enable_thinking: false },
+                  },
+                },
+              }
+            : {}),
         })
+      }
     )
-    return r.output
+    try {
+      return r.output
+    } catch (error) {
+      if (
+        NoOutputGeneratedError.isInstance(error) ||
+        NoObjectGeneratedError.isInstance(error)
+      ) {
+        const salvaged = salvagePlan(r)
+        if (salvaged) return salvaged
+      }
+      throw error
+    }
   }
 
   function shouldFallback(error: unknown) {
@@ -389,21 +358,6 @@ export async function aiSuggestMeals(
       "ai_overLimit",
       "ai_ownLimit",
     ].includes(error.code)
-  }
-
-  function friendlyError(error: unknown): never {
-    if (error instanceof AppError) throw error
-    if (
-      NoOutputGeneratedError.isInstance(error) ||
-      NoObjectGeneratedError.isInstance(error)
-    ) {
-      throw new AppError(
-        "upstream",
-        "ai_answer_unreadable",
-        "The AI's answer couldn't be read. Try again, or pick another model in Settings, Household, AI."
-      )
-    }
-    throw error
   }
 
   let output: z.infer<typeof AiPlan>
@@ -420,6 +374,7 @@ export async function aiSuggestMeals(
       {
         err: error,
         task: "plan",
+        date: options.date,
         timeout: isTimeoutError(error),
         model: "large",
       },
@@ -455,7 +410,7 @@ export async function aiSuggestMeals(
       }
       if (shouldFallback(fallbackError) && fallbackError !== error) {
         deps.logger?.warn(
-          { err: fallbackError, task: "plan" },
+          { err: fallbackError, task: "plan", date: options.date },
           "AI plan fallback failed"
         )
       }
@@ -463,37 +418,25 @@ export async function aiSuggestMeals(
     }
   }
 
+  const allowedBySlot = new Map(
+    pickable.map(({ slot, candidates }) => [
+      `${slot.date}:${slot.meal}`,
+      new Set(candidates.map((c) => c.id)),
+    ])
+  )
   const chosenBySlot = new Map<string, string>()
-  const chosenDishes = new Set<string>()
   for (const pick of output.suggestions) {
     const key = `${pick.date}:${pick.meal}`
     if (chosenBySlot.has(key)) continue
     const allowed = allowedBySlot.get(key)
-    if (!allowed) continue
-    const recipe = byId.get(pick.recipeId)
-    if (!recipe) continue
-    if (!allowed.some((r) => r.id === recipe.id)) continue
-    const d = dish(recipe.name)
-    if (used.has(d) || chosenDishes.has(d)) continue
-    chosenBySlot.set(key, recipe.id)
-    chosenDishes.add(d)
+    if (!allowed?.has(pick.recipeId)) continue
+    chosenBySlot.set(key, pick.recipeId)
   }
 
-  return options.slots.flatMap((slot) => {
-    const recipeId = chosenBySlot.get(`${slot.date}:${slot.meal}`)
-    const recipe = recipeId ? byId.get(recipeId) : null
+  return pickable.flatMap(({ slot }) => {
+    const id = chosenBySlot.get(`${slot.date}:${slot.meal}`)
+    const recipe = id ? candidateById.get(id) : undefined
     if (!recipe) return []
-    const theme = themeOf(slot)
-    const why: Reason[] = reasonsFor(recipe, {
-      today,
-      theme: theme
-        ? { label: themeLabel(theme), fits: fitsTheme(recipe, theme) }
-        : null,
-      weeknightDinner: isWeeknightDinner(slot),
-      usesUp: [],
-      onSale: null,
-      leaveOut: checks.get(recipe.id)?.leaveOut ?? [],
-    })
     return [
       {
         ...slot,
@@ -506,7 +449,7 @@ export async function aiSuggestMeals(
           totalMinutes: recipe.totalMinutes,
         },
         withRecipe: null,
-        why,
+        why: recipe.why,
       } satisfies Suggestion,
     ]
   })

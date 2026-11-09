@@ -12,12 +12,10 @@ import { aiSuggestMeals, type AiSuggestStatus } from "./ai-suggest.ts"
 import type { Slot, Suggestion } from "./suggest.ts"
 
 // AI Fill the week as a background job: generates meal suggestions for
-// review, then applies only what the user approves.
+// review, then applies only what the user approves. The AI picks from
+// small, algorithmically pre-filtered candidate sets, day by day.
 
 export const PLAN_AI_FILL_KIND = "plan.aiFill"
-
-/** Max slots per AI request to keep structured output reliable. */
-const CHUNK_SIZE = 7
 
 const Payload = z.object({
   slots: z.array(z.object({ date: z.string(), meal: z.string() })),
@@ -295,13 +293,6 @@ export async function declinePlanAiFill(
   )
 }
 
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const out: T[][] = []
-  for (let i = 0; i < items.length; i += size)
-    out.push(items.slice(i, i + size))
-  return out
-}
-
 export const planAiFillJob: JobHandler = {
   kind: PLAN_AI_FILL_KIND,
   concurrency: 1,
@@ -318,21 +309,17 @@ export const planAiFillJob: JobHandler = {
         null
     )
 
-    const suggestions: Suggestion[] = []
-    const chosenIds: string[] = [...(exclude ?? [])]
-    const chunks = chunk(typedSlots, CHUNK_SIZE)
     let done = 0
+    let phase:
+      "requesting_large_model" | "fallback_small_model" | "merging" | null =
+      "requesting_large_model"
 
-    const update = async (
-      phase:
-        "requesting_large_model" | "fallback_small_model" | "merging" | null,
-      extra?: Partial<Record<string, unknown>>
-    ) => {
+    const update = async (extra?: Partial<Record<string, unknown>>) => {
       await progress(done, typedSlots.length, {
         week: week ?? null,
         status: "running",
         slots: typedSlots,
-        suggestions,
+        suggestions: [],
         error: null,
         appliedAt: null,
         phase,
@@ -343,30 +330,29 @@ export const planAiFillJob: JobHandler = {
     }
 
     try {
-      for (const part of chunks) {
-        if (signal.aborted) {
-          const { JobStopped } = await import("../jobs/runner.ts")
-          throw new JobStopped()
-        }
-        await update("requesting_large_model")
-        const onStatus = async (status: AiSuggestStatus) => {
-          await update(status)
-        }
-        const run = await aiSuggestMeals({ ...deps, logger: deps.logger }, em, {
+      await update()
+      const suggestions = await aiSuggestMeals(
+        { ...deps, logger: deps.logger },
+        em,
+        {
           householdId,
           userId,
-          slots: part,
-          exclude: chosenIds,
+          slots: typedSlots,
+          exclude,
           profile,
           maxCaloriesPerDay: 2000,
-          onStatus,
+          onStatus: async (status) => {
+            phase = status
+            await update()
+          },
+          onProgress: async (completed) => {
+            done = completed
+            phase = completed < typedSlots.length ? phase : "merging"
+            await update()
+          },
           signal,
-        })
-        suggestions.push(...run)
-        chosenIds.push(...run.map((s) => s.recipe.id))
-        done += part.length
-        await update("merging")
-      }
+        }
+      )
 
       return {
         week: week ?? null,
@@ -398,7 +384,7 @@ export const planAiFillJob: JobHandler = {
               week: week ?? null,
               status: "failed",
               slots: typedSlots,
-              suggestions,
+              suggestions: [],
               error: message,
               appliedAt: null,
               phase: null,

@@ -82,6 +82,23 @@ export function createAiModels(): AiModels {
           // Ollama, LM Studio and OpenRouter take a JSON schema to answer
           // in; without this AI SDK leaves it out and asks for any JSON.
           supportsStructuredOutputs: true,
+          // Nemotron's thinking mode can spend the whole output budget on
+          // reasoning and return no final answer (finishReason "length",
+          // empty text). Turn thinking off so the model answers directly.
+          transformRequestBody: (args) => {
+            const model =
+              typeof args?.model === "string" ? args.model.toLowerCase() : ""
+            if (!model.includes("nemotron")) return args
+            const kwargs =
+              args?.chat_template_kwargs &&
+              typeof args.chat_template_kwargs === "object"
+                ? (args.chat_template_kwargs as Record<string, unknown>)
+                : {}
+            return {
+              ...args,
+              chat_template_kwargs: { ...kwargs, enable_thinking: false },
+            }
+          },
         })(target.model)
     }
   }
