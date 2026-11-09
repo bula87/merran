@@ -1713,6 +1713,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meal-logs/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a meal log for review
+         * @description Uploads a meal photo or text description, analyzes it in the background, and adds a meal log to review. With an API key, it needs the `recipes: write` permission.
+         */
+        post: operations["analyzeMealLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meal-logs/{logId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a meal log
+         * @description Approves a reviewed meal log, optionally applying edits, and adds it to the meals log. With an API key, it needs the `recipes: write` permission.
+         */
+        post: operations["approveMealLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meal-logs/{logId}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a meal log photo
+         * @description Returns the uploaded photo for a meal log in review. With an API key, it needs the `recipes: read` permission.
+         */
+        get: operations["getMealLogPhoto"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/meal-logs/{logId}": {
         parameters: {
             query?: never;
@@ -1728,46 +1788,6 @@ export interface paths {
          * @description With an API key, it needs the `recipes: write` permission.
          */
         delete: operations["deleteMealLog"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/nutrition/photo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Analyze a meal photo
-         * @description Starts background analysis of a meal photo (up to 6 minutes). Poll the returned job to get the estimated nutrition. With an API key, it needs the `recipes: write` permission.
-         */
-        post: operations["analyzeMealPhoto"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/nutrition/photo/{jobId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get meal photo analysis
-         * @description Returns the status and result of a background meal photo analysis job. With an API key, it needs the `recipes: write` permission.
-         */
-        get: operations["getMealPhotoAnalysisJob"];
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -8328,29 +8348,9 @@ export interface components {
         MealLogList: {
             logs: components["schemas"]["MealLog"][];
         };
-        /**
-         * @example {
-         *       "id": "meal-log-1",
-         *       "name": "Chicken salad",
-         *       "serving": "1 plate",
-         *       "servings": 1,
-         *       "loggedAt": "2026-11-09T12:30:00.000Z",
-         *       "source": "photo",
-         *       "confidence": "medium",
-         *       "notes": "Dressing amount uncertain.",
-         *       "calories": 420,
-         *       "protein": 34,
-         *       "carbs": 18,
-         *       "fat": 24,
-         *       "fiber": 4,
-         *       "sugar": 6,
-         *       "sodium": 680,
-         *       "recipe": null,
-         *       "createdAt": "2026-11-09T12:30:00.000Z"
-         *     }
-         */
         MealLog: {
             id: string;
+            status: components["schemas"]["MealLogStatus"];
             name: string;
             serving: string | null;
             servings: number | null;
@@ -8359,6 +8359,9 @@ export interface components {
             source: components["schemas"]["MealLogSource"];
             confidence: components["schemas"]["MealLogConfidence"];
             notes: string | null;
+            inputText: string | null;
+            hasPhoto: boolean;
+            error: string | null;
             calories: number | null;
             protein: number | null;
             carbs: number | null;
@@ -8375,7 +8378,9 @@ export interface components {
             createdAt: string;
         };
         /** @enum {string} */
-        MealLogSource: "photo" | "recipe" | "manual";
+        MealLogStatus: "processing" | "ready" | "failed" | "logged";
+        /** @enum {string} */
+        MealLogSource: "photo" | "text" | "recipe" | "manual";
         /** @enum {string|null} */
         MealLogConfidence: "low" | "medium" | "high" | null;
         MealLogInput: {
@@ -8396,31 +8401,21 @@ export interface components {
             sodium?: number | null;
             recipeId?: string | null;
         };
-        MealPhotoJob: {
-            jobId: string;
-            /** @enum {string} */
-            status: "queued" | "running" | "done" | "failed" | "cancelled";
+        MealLogAnalyzeText: {
+            text: string;
         };
-        MealPhotoJobStatus: components["schemas"]["MealPhotoJob"] & {
-            analysis: components["schemas"]["MealPhotoAnalysis"];
-            error: string | null;
+        MealLogApprove: {
+            name?: string;
+            serving?: string | null;
+            notes?: string | null;
+            calories?: number | null;
+            protein?: number | null;
+            carbs?: number | null;
+            fat?: number | null;
+            fiber?: number | null;
+            sugar?: number | null;
+            sodium?: number | null;
         };
-        /** @description The analysis, once the job is done. */
-        MealPhotoAnalysis: {
-            name: string | null;
-            description: string | null;
-            serving: string | null;
-            /** @enum {string|null} */
-            confidence: "low" | "medium" | "high" | null;
-            calories?: number;
-            protein?: number;
-            carbs?: number;
-            fat?: number;
-            fiber?: number;
-            sugar?: number;
-            sodium?: number;
-            notes: string | null;
-        } | null;
         /**
          * @example {
          *       "items": [
@@ -18250,6 +18245,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number | null;
+                status?: string;
             };
             header?: never;
             path?: never;
@@ -18337,54 +18333,7 @@ export interface operations {
             };
         };
     };
-    deleteMealLog: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                logId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Deleted. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not signed in. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Not allowed. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description No such meal log. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    analyzeMealPhoto: {
+    analyzeMealLog: {
         parameters: {
             query?: never;
             header?: never;
@@ -18396,20 +18345,22 @@ export interface operations {
                 "multipart/form-data": {
                     /** Format: binary */
                     photo?: string;
+                    text?: string;
                 };
+                "application/json": components["schemas"]["MealLogAnalyzeText"];
             };
         };
         responses: {
-            /** @description The analysis job. */
+            /** @description The meal log being analyzed. */
             202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MealPhotoJob"];
+                    "application/json": components["schemas"]["MealLog"];
                 };
             };
-            /** @description No photo, or the photo couldn't be read. */
+            /** @description No photo or text provided. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -18447,24 +18398,28 @@ export interface operations {
             };
         };
     };
-    getMealPhotoAnalysisJob: {
+    approveMealLog: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                jobId: string;
+                logId: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MealLogApprove"];
+            };
+        };
         responses: {
-            /** @description The analysis job status. */
+            /** @description The approved meal log. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MealPhotoJobStatus"];
+                    "application/json": components["schemas"]["MealLog"];
                 };
             };
             /** @description Not signed in. */
@@ -18485,7 +18440,112 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description No such analysis job. */
+            /** @description No such meal log. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Already approved. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMealLogPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                logId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The photo. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such meal log or photo. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteMealLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                logId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not signed in. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not allowed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No such meal log. */
             404: {
                 headers: {
                     [name: string]: unknown;
